@@ -2,7 +2,7 @@
 """
 Vestaboard Note Universal Controller
 Manages scheduled routines, overlapping rotations, multi-team sports, Breckenridge snow conditions,
-Manhattan Cruise Terminal (Piers 88-92), and modular feeds for the 3x15 Note grid.
+Manhattan Cruise Terminal (Piers 88-92), Air Quality & UV, and modular feeds for the 3x15 Note grid.
 """
 
 import argparse
@@ -166,11 +166,7 @@ def format_countdown_row(direction: str, t1: tuple = None, t2: tuple = None) -> 
     return f"{direction}: {s1} {s2}"
 
 def get_subway_countdown() -> list[str]:
-    # Row 1: Centered station name
     row1 = "  50TH ST C/E  "
-    
-    # Rows 2 & 3: Dynamic route letter + trunk line colors (e.g. Blue A/C/E, Orange B/D/F/M)
-    # Automatically handles 1-digit or 2-digit timing with locked 15-flap alignment
     row2 = format_countdown_row("UP", ("C", 2), ("E", 7))
     row3 = format_countdown_row("DN", ("E", 4), ("F", 6))
     return [row1, row2, row3]
@@ -254,7 +250,6 @@ def get_breck() -> list[str]:
       TRAILS:   0/187
     """
     new_snow = 0
-    # 1. Live 24h Snowfall from Open-Meteo
     try:
         snow_url = "https://api.open-meteo.com/v1/forecast?latitude=39.48&longitude=-106.07&daily=snowfall_sum&timezone=America%2FDenver&precipitation_unit=inch"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -268,7 +263,6 @@ def get_breck() -> list[str]:
     open_lifts, total_lifts = 0, 35
     open_trails, total_trails = 0, 187
 
-    # 2. Primary Vail Resorts Terrain API
     try:
         terrain_url = "https://cache.snow.com/api/TerrainApi/GetTerrainStatus"
         headers = {
@@ -303,7 +297,6 @@ def get_breck() -> list[str]:
         except Exception as e2:
             print(f"Liftie backup error: {e2}")
 
-    # 3. Format lines strictly 15 chars each
     snow_str = f'+{new_snow}" SNOW' if new_snow > 0 else f'{new_snow}" SNOW'
     row1 = f"BRECK {snow_str:>9}".ljust(15)[:15]
     row2 = f"LIFTS: {open_lifts:>2}/{total_lifts:<2} OP".ljust(15)[:15]
@@ -333,8 +326,6 @@ def get_mct() -> list[str]:
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
 
-    # 1. Primary: Scrape CruiseMapper Port 98 (NYC Manhattan-Brooklyn)
-    # CruiseMapper serves full static HTML tables with real ship names & departures
     try:
         cm_url = "https://www.cruisemapper.com/ports/new-york-port-98"
         res = requests.get(cm_url, headers=headers, timeout=8)
@@ -357,7 +348,6 @@ def get_mct() -> list[str]:
     except Exception as e:
         print(f"CruiseMapper scrape error: {e}")
 
-    # 2. Secondary fallback: CruiseTimeTables
     if not docked_ship:
         try:
             ct_url = "https://www.cruisetimetables.com/new-york-city-new-york-cruise-ship-schedule.html"
@@ -370,7 +360,6 @@ def get_mct() -> list[str]:
         except Exception as e2:
             print(f"CruiseTimeTables fallback error: {e2}")
 
-    # If no ship is found in port
     if not docked_ship:
         row2 = "NO SHIPS DOCKED"
         row3 = "  PIERS 88-92  "
@@ -378,6 +367,85 @@ def get_mct() -> list[str]:
 
     row2 = docked_ship[:15].ljust(15)
     row3 = (departure_str if departure_str else "BERTHED AT PIER")[:15].ljust(15)
+    return [row1, row2, row3]
+
+def get_air_quality(lat: float, lon: float) -> list[str]:
+    """
+    Air Quality & UV Health Barometer Feed for Vestaboard Note (3x15).
+    Uses color tiles for AQI (Row 1) and UV Max (Row 3) as balanced visual anchors.
+    Row 1: [Color] AQI {val} {status} (e.g. {66} AQI 32  GOOD )
+    Row 2: PM2.5 {val} UG/M3          (e.g. PM2.5 7.4 UG/M3)
+    Row 3: [Color] UV MAX {val} {status} (e.g. {65} UV MAX 4 MOD )
+    """
+    aq_url = f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lon}&current=us_aqi,pm2_5&timezone=auto"
+    wx_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=uv_index_max&timezone=auto"
+    
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    
+    aqi = 30
+    pm25 = 6.5
+    uv_max = 3.0
+    
+    try:
+        aq_res = requests.get(aq_url, headers=headers, timeout=6).json().get("current", {})
+        if "us_aqi" in aq_res:
+            aqi = int(aq_res.get("us_aqi", 30))
+        if "pm2_5" in aq_res:
+            pm25 = float(aq_res.get("pm2_5", 6.5))
+    except Exception as e:
+        print(f"Air quality fetch error: {e}")
+
+    try:
+        wx_res = requests.get(wx_url, headers=headers, timeout=6).json().get("daily", {})
+        uv_list = wx_res.get("uv_index_max", [])
+        if uv_list and uv_list[0] is not None:
+            uv_max = float(uv_list[0])
+    except Exception as e:
+        print(f"UV fetch error: {e}")
+
+    # Official Vestaboard color flaps: Green {66}, Yellow {65}, Orange {64}, Red {63}
+    if aqi <= 50:
+        c_aqi, s_aqi = "{66}", "GOOD"
+    elif aqi <= 100:
+        c_aqi, s_aqi = "{65}", "MOD "
+    elif aqi <= 150:
+        c_aqi, s_aqi = "{64}", "SENS"
+    else:
+        c_aqi, s_aqi = "{63}", "UNHL"
+
+    uv_r = round(uv_max)
+    if uv_r <= 2:
+        c_uv, s_uv = "{66}", "LOW "
+    elif uv_r <= 5:
+        c_uv, s_uv = "{65}", "MOD "
+    elif uv_r <= 7:
+        c_uv, s_uv = "{64}", "HIGH"
+    else:
+        c_uv, s_uv = "{63}", "V.HI"
+
+    # Row 1: 15 physical flaps
+    aqi_str = f"AQI {aqi}"
+    row1 = f"{c_aqi} {aqi_str:<7} {s_aqi}"
+    if count_flaps(row1) < 15:
+        row1 += " " * (15 - count_flaps(row1))
+    else:
+        row1 = row1[:18]
+
+    # Row 2: 15 chars
+    pm_str = f"{pm25:.1f}"
+    row2 = f"PM2.5 {pm_str} UG/M3"
+    if len(row2) < 15:
+        row2 = f"PM2.5" + (" " * (16 - len(row2))) + f"{pm_str} UG/M3"
+    row2 = row2[:15].ljust(15)
+
+    # Row 3: 15 physical flaps
+    uv_str = f"UV MAX {uv_r}"
+    row3 = f"{c_uv} {uv_str:<8} {s_uv}"
+    if count_flaps(row3) < 15:
+        row3 += " " * (15 - count_flaps(row3))
+    else:
+        row3 = row3[:18]
+
     return [row1, row2, row3]
 
 # ==============================================================================
@@ -445,7 +513,7 @@ def send_to_vestaboard(lines: list[str], dry_run: bool = False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--routine", action="store_true")
-    parser.add_argument("--module", type=str, choices=["weather", "subway_status", "subway_countdown", "markets", "sports", "breck", "mct"])
+    parser.add_argument("--module", type=str, choices=["weather", "subway_status", "subway_countdown", "markets", "sports", "breck", "mct", "air_quality"])
     parser.add_argument("--team", type=str, default="", choices=["", "BUF", "NYJ", "NYG"])
     parser.add_argument("--config", type=str, default="config.json")
     parser.add_argument("--test", action="store_true")
@@ -481,6 +549,8 @@ def main():
         lines = get_breck()
     elif module_to_run == "mct":
         lines = get_mct()
+    elif module_to_run == "air_quality":
+        lines = get_air_quality(coords["latitude"], coords["longitude"])
     else:
         lines = get_weather(coords["latitude"], coords["longitude"])
 
