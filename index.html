@@ -228,6 +228,21 @@
           </div>
         </div>
 
+        <!-- Manhattan Cruise Port Card -->
+        <div class="p-2.5 rounded-xl border border-white/5 bg-zinc-950/50 hover:border-white/10 transition flex items-center justify-between gap-2 sm:col-span-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">🚢</span>
+            <div class="truncate">
+              <div class="text-xs font-medium text-white truncate">Manhattan Cruise Port</div>
+              <div class="text-[10px] text-zinc-500 truncate">Piers 88–92 Berthed Cruise Ships</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button id="btnPrevMCT" class="px-2 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-[11px] text-zinc-300">Preview</button>
+            <button id="btnSendMCT" class="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-semibold shadow">Send</button>
+          </div>
+        </div>
+
         <div class="sm:col-span-2 p-2.5 rounded-xl border border-white/5 bg-zinc-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <span class="text-base">🏈</span>
@@ -332,7 +347,8 @@
       subway_countdown: { icon: "⏱️", name: "50th St Next Trains" },
       markets: { icon: "📈", name: "Market Close" },
       sports: { icon: "🏈", name: "Sports Game Day" },
-      breck: { icon: "⛷️", name: "Breck Snow & Lifts" }
+      breck: { icon: "⛷️", name: "Breck Snow & Lifts" },
+      mct: { icon: "🚢", name: "Manhattan Cruise Port" }
     };
 
     let routine = [
@@ -679,6 +695,17 @@
     document.getElementById("btnPrevBreck").addEventListener("click", () => { loadBreck(false); });
     document.getElementById("btnSendBreck").addEventListener("click", () => { loadBreck(true); });
 
+    function loadMCT(sendAfter = false) {
+      currentLines = ["PORT OF NY: MCT", "MSC MERAVIGLIA ", "DEPARTS SUN 7PM"];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "MANHATTAN CRUISE";
+      setStatus("Loaded Manhattan Cruise Port preview (Piers 88-92).");
+      if (sendAfter) sendToBoard(currentLines);
+    }
+
+    document.getElementById("btnPrevMCT").addEventListener("click", () => { loadMCT(false); });
+    document.getElementById("btnSendMCT").addEventListener("click", () => { loadMCT(true); });
+
     document.getElementById("btnPrevSports").addEventListener("click", () => { loadSports(false); });
 
     document.getElementById("btnSendWeather").addEventListener("click", () => { loadWeather(true); });
@@ -809,6 +836,7 @@
               <option value="markets" ${s.module === 'markets' ? 'selected' : ''}>📈 Markets</option>
               <option value="sports" ${s.module === 'sports' ? 'selected' : ''}>🏈 Sports</option>
               <option value="breck" ${s.module === 'breck' ? 'selected' : ''}>⛷️ Breck Snow</option>
+              <option value="mct" ${s.module === 'mct' ? 'selected' : ''}>🚢 Cruise Port</option>
             </select>
           </div>
 
