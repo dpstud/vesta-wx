@@ -85,7 +85,7 @@
     </div>
   </header>
 
-  <!-- Studio Container -->
+  <!-- Mobile-Optimized Studio Container -->
   <main class="max-w-2xl mx-auto px-4 py-4 sm:py-6 flex-1 w-full space-y-6">
 
     <!-- 1. Interactive Studio: Display + Text Input -->
@@ -231,7 +231,7 @@
       </div>
     </section>
 
-    <!-- 3. Daily Routine with Dynamic Typography & Auto-Save -->
+    <!-- 3. Daily Routine with Overlap Detection & Multi-Team Selection -->
     <section class="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-white/10">
         <div>
@@ -325,7 +325,7 @@
       { id: "3", module: "subway_status", start_time: "08:30", end_time: "09:30", enabled: true },
       { id: "4", module: "weather", start_time: "09:30", end_time: "16:15", enabled: true },
       { id: "5", module: "markets", start_time: "16:15", end_time: "17:30", enabled: true },
-      { id: "6", module: "sports", start_time: "18:00", end_time: "22:00", enabled: true }
+      { id: "6", module: "sports", teams: ["BUF", "NYJ"], start_time: "18:00", end_time: "22:00", enabled: true }
     ];
 
     let currentLines = ["PARTLY CLOUDY", "68  H:74 L:52", "{67}{67} RAIN: 20% {67}{67}"];
@@ -536,6 +536,15 @@
         const mod = MODULES[s.module] || { icon: "⚡", name: s.module };
         const el = document.createElement("div");
         el.id = `slot_${s.id}`;
+
+        let titleLabel = mod.name;
+        if (s.module === 'sports') {
+          s.teams = s.teams || ['BUF'];
+          titleLabel = `Sports (${s.teams.join(', ')})`;
+        }
+
+        const isSports = (s.module === 'sports');
+        const selectedTeams = s.teams || ['BUF'];
         
         el.className = `p-3.5 rounded-xl border transition space-y-2.5 ${
           isHighlighted 
@@ -550,7 +559,7 @@
               <input type="checkbox" data-i="${i}" class="rt-toggle w-4 h-4 rounded text-amber-500 bg-black border-zinc-700 shrink-0" ${s.enabled ? 'checked' : ''}>
               <span class="text-sm font-medium text-white truncate flex items-center gap-1.5">
                 <span>${mod.icon}</span>
-                <span>${mod.name}</span>
+                <span>${titleLabel}</span>
               </span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
@@ -559,7 +568,7 @@
             </div>
           </div>
 
-          <!-- Row 2: Apple Control Strip with High-Contrast Mobile Time Pickers -->
+          <!-- Row 2: Control Strip with High-Contrast Mobile Time Pickers -->
           <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-white/5 flex-wrap sm:flex-nowrap">
             <div class="flex items-center gap-2 text-xs text-zinc-300 font-flap bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 w-full sm:w-auto justify-between sm:justify-start">
               <div class="flex items-center gap-1.5">
@@ -581,6 +590,24 @@
               <option value="sports" ${s.module === 'sports' ? 'selected' : ''}>🏈 Sports</option>
             </select>
           </div>
+
+          <!-- Row 3: Multi-Team Sports Selector -->
+          ${isSports ? `
+          <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5 text-[11px]">
+            <span class="text-zinc-400 font-medium">TEAMS (ROTATES EVERY 5M):</span>
+            <div class="flex items-center gap-1.5">
+              ${['BUF', 'NYJ', 'NYG'].map(tm => {
+                const active = selectedTeams.includes(tm);
+                const tmNames = { BUF: 'Bills', NYJ: 'Jets', NYG: 'Giants' };
+                return `<button data-i="${i}" data-team="${tm}" class="team-toggle px-2 py-0.5 rounded-full font-flap text-xs transition border ${
+                  active 
+                    ? 'bg-amber-500 text-black border-amber-400 font-semibold shadow-sm' 
+                    : 'bg-white/5 text-zinc-400 border-white/10 hover:border-white/20'
+                }">${active ? '✓ ' : ''}${tmNames[tm]}</button>`;
+              }).join('')}
+            </div>
+          </div>
+          ` : ''}
         `;
         c.appendChild(el);
       });
@@ -602,6 +629,24 @@
       document.querySelectorAll(".rt-del").forEach(btn => {
         btn.addEventListener("click", e => { 
           routine.splice(parseInt(e.target.dataset.i, 10), 1); 
+          renderRoutine();
+          autoSaveRoutine();
+        });
+      });
+
+      document.querySelectorAll(".team-toggle").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const idx = parseInt(e.target.dataset.i, 10);
+          const team = e.target.dataset.team;
+          const slot = routine[idx];
+          slot.teams = slot.teams || ['BUF'];
+          if (slot.teams.includes(team)) {
+            if (slot.teams.length > 1) {
+              slot.teams = slot.teams.filter(t => t !== team);
+            }
+          } else {
+            slot.teams.push(team);
+          }
           renderRoutine();
           autoSaveRoutine();
         });
