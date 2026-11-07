@@ -442,15 +442,105 @@
       }
     }
 
-    function loadWeather() {
-      currentLines = ["PARTLY CLOUDY", "68  H:74 L:52", "{67}{67} RAIN: 20% {67}{67}"];
-      renderGrid(currentLines);
-      document.getElementById("displayMode").textContent = "WEATHER FEED";
+    const WEATHER_CODES = {
+      0: "CLEAR SKY", 1: "SUNNY SKIES", 2: "PARTLY CLOUDY", 3: "FULL OVERCAST",
+      45: "FOGGY", 48: "DENSE FOG", 51: "LIGHT DRIZZLE", 53: "DRIZZLE",
+      55: "HEAVY DRIZZLE", 61: "SLIGHT RAIN", 63: "STEADY RAIN", 65: "SEVERE RAIN",
+      71: "SLIGHT SNOW", 73: "STEADY SNOW", 75: "SNOWSTORM", 80: "SHOWERS",
+      81: "HEAVY SHOWERS", 82: "STORM SHOWERS", 95: "THUNDERSTORMS"
+    };
+    const PRECIP_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99];
+
+    function padFlaps(text, width = 15) {
+      const len = text.length;
+      if (len >= width) return text.slice(0, width);
+      const left = Math.floor((width - len) / 2);
+      const right = width - len - left;
+      return " ".repeat(left) + text + " ".repeat(right);
     }
-    function loadSubwayStatus() {
-      currentLines = ["50TH ST  C / E", "C TRAIN: {66} OK ", "E TRAIN: {66} OK "];
+
+    async function loadWeather(sendAfter = false) {
+      setStatus("Fetching live weather forecast...");
+      const lat = parseFloat(localStorage.getItem("VESTA_LAT") || "40.7128");
+      const lon = parseFloat(localStorage.getItem("VESTA_LON") || "-74.0060");
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
+
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          const current = data.current || {};
+          const daily = data.daily || {};
+          const temp = Math.round(current.temperature_2m ?? 50);
+          const code = current.weather_code ?? 0;
+          const condition = WEATHER_CODES[code] || "VARIABLE";
+          const high = Math.round(daily.temperature_2m_max?.[0] ?? temp);
+          const low = Math.round(daily.temperature_2m_min?.[0] ?? temp);
+          const rain = Math.round(daily.precipitation_probability_max?.[0] ?? 0);
+          const isPrecip = PRECIP_CODES.includes(code);
+
+          const rainText = rain >= 100 ? "RAIN:100%" : `RAIN: ${String(rain).padStart(2)}%`;
+          const bottomRow = isPrecip ? `{67}{67} ${rainText} {67}{67}` : padFlaps(rainText, 15);
+
+          currentLines = [
+            padFlaps(condition, 15),
+            padFlaps(`${temp}  H:${high} L:${low}`, 15),
+            bottomRow
+          ];
+          renderGrid(currentLines);
+          document.getElementById("displayMode").textContent = "WEATHER FEED";
+          setStatus(`Loaded live weather: ${condition}, ${temp}°F (H:${high}° L:${low}°).`);
+
+          if (sendAfter) {
+            sendToBoard(currentLines);
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn("Weather fetch error:", err);
+      }
+
+      currentLines = ["WEATHER REPORT", " DATA PENDING  ", "  TRYING AGAIN "];
+      renderGrid(currentLines);
+      if (sendAfter) sendToBoard(currentLines);
+    }
+    async function loadSubwayStatus(sendAfter = false) {
+      setStatus("Fetching live 50th St C/E status...");
+      let cStatus = "Good Service", eStatus = "Good Service";
+      try {
+        const res = await fetch("https://collector-otp-prod.camsys-apps.com/realtime/service-alerts");
+        if (res.ok) {
+          const data = await res.json();
+          for (const entity of (data.alerts || [])) {
+            for (const route of (entity.routes || [])) {
+              const rid = route.route_id;
+              const header = (entity.header_text?.text || "").toLowerCase();
+              if (rid === "C") {
+                cStatus = (header.includes("delay") || header.includes("slow")) ? "Delays" : "Service Change";
+              } else if (rid === "E") {
+                eStatus = (header.includes("delay") || header.includes("slow")) ? "Delays" : "Service Change";
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Subway status fetch error:", err);
+      }
+
+      const getBadge = (s) => {
+        const u = s.toUpperCase();
+        return (u.includes("GOOD") || u.includes("NORMAL")) ? "{66} OK " : ((u.includes("DELAY") || u.includes("SLOW")) ? "{65} DLY" : "{63} CHG");
+      };
+
+      currentLines = [
+        padFlaps("50TH ST  C / E", 15),
+        `C TRAIN: ${getBadge(cStatus)} `,
+        `E TRAIN: ${getBadge(eStatus)} `
+      ];
       renderGrid(currentLines);
       document.getElementById("displayMode").textContent = "50TH ST STATUS";
+      setStatus(`Loaded live MTA status: C: ${cStatus}, E: ${eStatus}`);
+      if (sendAfter) sendToBoard(currentLines);
     }
     function loadSubwayCount() {
       currentLines = ["  50TH ST C/E  ", "UP: C 3M  E 8M ", "DN: E 2M  C 6M "];
@@ -516,29 +606,86 @@
       }
     }
 
-    function loadSports() {
+    async function loadSports(sendAfter = false) {
       const t = document.getElementById("sportsTeam").value;
-      if (t === "BUF") currentLines = [" BUFFALO BILLS ", "NEXT: SUN 1:00P", "  vs DOLPHINS  "];
-      else if (t === "NYJ") currentLines = [" NEW YORK JETS ", "NEXT: SUN 4:25P", "  vs PATRIOTS  "];
-      else currentLines = ["NEW YORK GIANTS", "NEXT: MON 8:15P", "  vs COWBOYS   "];
+      const teamIds = { "BUF": "2", "NYJ": "20", "NYG": "19" };
+      const teamNames = { "BUF": "BUFFALO BILLS", "NYJ": "NEW YORK JETS", "NYG": "NEW YORK GIANTS" };
+      const tid = teamIds[t] || "2";
+      const tname = teamNames[t] || "BUFFALO BILLS";
+
+      setStatus(`Fetching live ${tname} schedule...`);
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${tid}/schedule`);
+        if (res.ok) {
+          const data = await res.json();
+          const events = data.events || [];
+          for (const ev of events) {
+            const state = ev.status?.type?.state;
+            const comp = ev.competitions?.[0] || {};
+            const comps = comp.competitors || [];
+            if (state === "in") {
+              const clock = ev.status?.displayClock || "LIVE";
+              const period = ev.status?.period || 1;
+              const hScore = comps[0]?.score || "0";
+              const aScore = comps[1]?.score || "0";
+              const hCode = comps[0]?.team?.abbreviation || "HM";
+              const aCode = comps[1]?.team?.abbreviation || "AW";
+              currentLines = [
+                padFlaps(tname.slice(0, 15), 15),
+                padFlaps(`QTR ${period}  ${clock}`, 15),
+                padFlaps(`${aCode} ${aScore}|${hCode} ${hScore}`, 15)
+              ];
+              renderGrid(currentLines);
+              document.getElementById("displayMode").textContent = `SPORTS (${t}) LIVE`;
+              setStatus(`Loaded live game: ${tname}`);
+              if (sendAfter) sendToBoard(currentLines);
+              return;
+            } else if (state === "pre") {
+              const dt = new Date(ev.date);
+              const opp = comps[0]?.team?.id === tid ? comps[1] : comps[0];
+              const oppName = (opp?.team?.shortDisplayName || "OPP").toUpperCase();
+              const dayStr = dt.toLocaleDateString("en-US", { weekday: "short", hour: "numeric", minute: "numeric" }).toUpperCase().replace(" AM", "A").replace(" PM", "P");
+              currentLines = [
+                padFlaps(tname.slice(0, 15), 15),
+                padFlaps(`NEXT: ${dayStr}`, 15),
+                padFlaps(`vs ${oppName}`, 15)
+              ];
+              renderGrid(currentLines);
+              document.getElementById("displayMode").textContent = `SPORTS (${t})`;
+              setStatus(`Loaded live ESPN schedule for ${tname}: Next vs ${oppName}`);
+              if (sendAfter) sendToBoard(currentLines);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("ESPN fetch error:", err);
+      }
+
+      currentLines = [
+        padFlaps(tname.slice(0, 15), 15),
+        padFlaps("NEXT GAME", 15),
+        padFlaps("SCHEDULE PENDING", 15)
+      ];
       renderGrid(currentLines);
       document.getElementById("displayMode").textContent = `SPORTS (${t})`;
+      if (sendAfter) sendToBoard(currentLines);
     }
 
-    document.getElementById("btnPrevWeather").addEventListener("click", () => { loadWeather(); setStatus("Loaded weather preview."); });
-    document.getElementById("btnPrevSubwayStatus").addEventListener("click", () => { loadSubwayStatus(); setStatus("Loaded subway status preview."); });
+    document.getElementById("btnPrevWeather").addEventListener("click", () => { loadWeather(false); });
+    document.getElementById("btnPrevSubwayStatus").addEventListener("click", () => { loadSubwayStatus(false); });
     document.getElementById("btnPrevSubwayCount").addEventListener("click", () => { loadSubwayCount(); setStatus("Loaded arrival countdown preview."); });
     document.getElementById("btnPrevMarkets").addEventListener("click", () => { loadMarkets(); setStatus("Loaded market close preview."); });
     document.getElementById("btnPrevBreck").addEventListener("click", () => { loadBreck(false); });
     document.getElementById("btnSendBreck").addEventListener("click", () => { loadBreck(true); });
 
-    document.getElementById("btnPrevSports").addEventListener("click", () => { loadSports(); setStatus("Loaded sports preview."); });
+    document.getElementById("btnPrevSports").addEventListener("click", () => { loadSports(false); });
 
-    document.getElementById("btnSendWeather").addEventListener("click", () => { loadWeather(); sendToBoard(currentLines); });
-    document.getElementById("btnSendSubwayStatus").addEventListener("click", () => { loadSubwayStatus(); sendToBoard(currentLines); });
+    document.getElementById("btnSendWeather").addEventListener("click", () => { loadWeather(true); });
+    document.getElementById("btnSendSubwayStatus").addEventListener("click", () => { loadSubwayStatus(true); });
     document.getElementById("btnSendSubwayCount").addEventListener("click", () => { loadSubwayCount(); sendToBoard(currentLines); });
     document.getElementById("btnSendMarkets").addEventListener("click", () => { loadMarkets(); sendToBoard(currentLines); });
-    document.getElementById("btnSendSports").addEventListener("click", () => { loadSports(); sendToBoard(currentLines); });
+    document.getElementById("btnSendSports").addEventListener("click", () => { loadSports(true); });
 
     function updateComposer() {
       const r1 = document.getElementById("in1").value;
@@ -892,6 +1039,7 @@
       renderGrid(currentLines);
       renderRoutine();
       loadCloudConfig();
+      loadWeather(false);
     });
   </script>
 </body>
