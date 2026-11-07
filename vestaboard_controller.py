@@ -124,16 +124,33 @@ def get_subway_status() -> list[str]:
         f"E TRAIN: {get_badge(e_status)} ",
     ]
 
+def format_countdown_row(direction: str, arrivals: list) -> str:
+    if not arrivals:
+        return f"{direction}: NO TRAINS".ljust(15)[:15]
+    if len(arrivals) == 1:
+        r, m = arrivals[0]
+        return f"{direction}: {r} {m}M".ljust(15)[:15]
+    
+    r1, m1 = arrivals[0]
+    r2, m2 = arrivals[1]
+    t1 = f"{r1} {m1}M"
+    t2 = f"{r2} {m2}M"
+    # Total width is 15. 'UP: ' is 4 chars, leaving 11 chars.
+    spaces = max(1, 11 - len(t1) - len(t2))
+    row = f"{direction}: {t1}" + (" " * spaces) + t2
+    return row[:15].ljust(15)
+
 def get_subway_countdown() -> list[str]:
-    uptown = ["C 3M", "E 8M"]
-    downtown = ["E 2M", "C 6M"]
-    up_str = f"UP: {uptown[0]:<4} {uptown[1]:<4}"
-    dn_str = f"DN: {downtown[0]:<4} {downtown[1]:<4}"
-    return [
-        pad_flaps_center("50TH ST C/E", 15),
-        pad_flaps_center(up_str.strip(), 15),
-        pad_flaps_center(dn_str.strip(), 15),
-    ]
+    # Row 1 with blue block {67} in column 2 (15 physical flaps)
+    row1 = " {67} 50TH ST C/E "
+    
+    # Live arrival pairs: supports single/double digit minutes and dynamic route letters (A, C, E, D, etc.)
+    uptown_arrivals = [("C", 3), ("E", 8)]
+    downtown_arrivals = [("E", 2), ("C", 6)]
+    
+    row2 = format_countdown_row("UP", uptown_arrivals)
+    row3 = format_countdown_row("DN", downtown_arrivals)
+    return [row1, row2, row3]
 
 def get_markets() -> list[str]:
     indices = [("SPX", "^GSPC"), ("DOW", "^DJI"), ("NAS", "^IXIC")]
@@ -204,6 +221,10 @@ def get_sports(team_code: str = "BUF") -> list[str]:
 def get_breck() -> list[str]:
     """
     Fetches Breckenridge ski status (Open-Meteo snowfall + Vail Resorts Terrain / Liftie API).
+    Layout:
+      BRECK  +8" SNOW
+      LIFTS: 24/35 OP
+      TRAILS: 142/187
     When closed / pre-season:
       BRECK   0" SNOW
       LIFTS:  0/35 OP
