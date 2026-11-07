@@ -29,14 +29,6 @@
   },
   "routine": [
     {
-      "id": "1",
-      "module": "weather",
-      "start_time": "07:00",
-      "end_time": "08:30",
-      "enabled": false,
-      "name": "Weather & Rain"
-    },
-    {
       "id": "2",
       "module": "subway_countdown",
       "start_time": "08:30",
