@@ -8,294 +8,605 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .font-mono-flap { font-family: 'JetBrains Mono', monospace; }
+    body { font-family: 'Inter', sans-serif; }
+    .font-flap { font-family: 'JetBrains Mono', monospace; }
     .flap-bit {
       position: relative;
-      background: #121316;
+      background: #141518;
       border: 1px solid #27272a;
       border-radius: 4px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 2px 4px rgba(0,0,0,0.6);
       user-select: none;
-      transition: transform 0.15s ease, background-color 0.15s ease;
+      transition: background-color 0.1s ease;
     }
     .flap-bit::after {
       content: '';
       position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
+      left: 0; right: 0; top: 50%;
       height: 1px;
-      background: rgba(0, 0, 0, 0.85);
-      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
-      z-index: 10;
+      background: rgba(0,0,0,0.9);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
     }
-    .flap-color-blue { background-color: #1e3a8a !important; color: transparent !important; }
-    .flap-color-green { background-color: #14532d !important; color: transparent !important; }
-    .flap-color-red { background-color: #7f1d1d !important; color: transparent !important; }
-    .flap-color-yellow { background-color: #713f12 !important; color: transparent !important; }
-    .flap-color-orange { background-color: #7c2d12 !important; color: transparent !important; }
-    .flap-color-violet { background-color: #581c87 !important; color: transparent !important; }
-    .flap-color-white { background-color: #e4e4e7 !important; color: transparent !important; }
-    .flap-color-heart { background-color: #991b1b !important; color: #fecdd3 !important; }
+    .flap-c-67 { background-color: #1e3a8a !important; color: transparent !important; }
+    .flap-c-66 { background-color: #14532d !important; color: transparent !important; }
+    .flap-c-63 { background-color: #7f1d1d !important; color: transparent !important; }
+    .flap-c-65 { background-color: #713f12 !important; color: transparent !important; }
+    .flap-c-69 { background-color: #e4e4e7 !important; color: transparent !important; }
+    .flap-c-62 { background-color: #881337 !important; color: #fecdd3 !important; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-black">
 
-  <header class="border-b border-zinc-800/80 bg-zinc-900/50 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between">
+  <header class="border-b border-zinc-800/80 bg-zinc-900/60 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center font-bold text-black shadow-lg shadow-amber-500/20">
-          V
-        </div>
+        <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-bold text-black shadow-lg shadow-amber-500/20">V</div>
         <div>
-          <h1 class="text-base font-semibold tracking-tight text-white flex items-center gap-2">
-            Vestaboard Note
-            <span class="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-amber-400 font-mono">3×15</span>
+          <h1 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+            Vestaboard Note <span class="text-[11px] px-1.5 py-0.5 rounded bg-zinc-800 text-amber-400 font-flap">3×15</span>
           </h1>
           <p class="text-xs text-zinc-400">Personal Dashboard & Cloud Manager</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btnSoundToggle" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/80 text-xs font-medium text-zinc-300 transition flex items-center gap-1.5">
-          <span id="soundIcon">🔊</span> Sound
+        <button id="btnSound" class="px-2.5 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-xs text-zinc-300 transition">
+          <span id="soundIcon">🔊</span>
         </button>
-        <button id="btnOpenSettings" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold shadow-md transition flex items-center gap-1.5">
-          <span>⚙️</span> API Settings
+        <button id="btnOpenSettings" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold shadow transition">
+          ⚙️ API Settings
         </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6 sm:px-6 flex-1 w-full space-y-8">
+  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- 1. Live Virtual Display -->
-    <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/80 relative overflow-hidden">
-      <div class="flex items-center justify-between mb-4">
+    <!-- Virtual Display Section -->
+    <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Live Virtual Note Display</h2>
+          <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Virtual Note Display</span>
         </div>
-        <div class="flex items-center gap-2 text-xs text-zinc-400">
-          <span id="displayModeBadge" class="px-2.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono">AD-HOC COMPOSER</span>
-          <button id="btnPushCurrent" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg transition text-xs flex items-center gap-1.5 shadow">
-            <span>🚀</span> Send to Board
+        <div class="flex items-center gap-2">
+          <span id="displayMode" class="text-[11px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-flap">AD-HOC COMPOSER</span>
+          <button id="btnSendBoard" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg text-xs transition shadow flex items-center gap-1">
+            🚀 Send to Board
           </button>
         </div>
       </div>
 
-      <div class="bg-black/95 p-3 sm:p-5 rounded-xl border border-zinc-800 shadow-inner overflow-x-auto flex justify-center">
+      <div class="bg-black/95 p-3 sm:p-5 rounded-xl border border-zinc-800/80 shadow-inner overflow-x-auto flex justify-center">
         <div id="vestaGrid" class="grid grid-rows-3 gap-1.5 sm:gap-2 inline-block"></div>
       </div>
 
-      <div id="statusToast" class="mt-3 text-xs text-center text-zinc-400 min-h-[1.25rem] transition-all duration-300 font-mono">
+      <div id="statusToast" class="mt-2.5 text-xs text-center text-zinc-400 min-h-[1.25rem] font-flap">
         Ready to post updates
       </div>
     </section>
 
-    <!-- 2. Two-Column Workspace -->
+    <!-- Workspace Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-      <!-- Left Column: Feeds -->
-      <div class="lg:col-span-5 space-y-5">
-        <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5">
-          <h3 class="text-sm font-semibold text-white mb-1 flex items-center gap-2">
-            <span>⚡</span> One-Click Feed Push
-          </h3>
-          <p class="text-xs text-zinc-400 mb-4">Preview and instantly post live feeds to your Note.</p>
-
-          <div class="space-y-2.5">
-            <button id="btnFeedWeather" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
-              <div class="flex items-center gap-3">
-                <span class="text-xl">🌦️</span>
-                <div>
-                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">Live Weather & Rain</div>
-                  <div class="text-[11px] text-zinc-500">Live forecast + blue rain tiles</div>
-                </div>
-              </div>
-              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
-            </button>
-
-            <button id="btnFeedSubwayStatus" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
-              <div class="flex items-center gap-3">
-                <span class="text-xl">🚇</span>
-                <div>
-                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">50th St C/E Status</div>
-                  <div class="text-[11px] text-zinc-500">MTA Service alerts (Green/Yellow/Red)</div>
-                </div>
-              </div>
-              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
-            </button>
-
-            <button id="btnFeedSubwayCount" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
-              <div class="flex items-center gap-3">
-                <span class="text-xl">⏱️</span>
-                <div>
-                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">50th St C/E Next Trains</div>
-                  <div class="text-[11px] text-zinc-500">Next 2 Uptown & Downtown arrival mins</div>
-                </div>
-              </div>
-              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
-            </button>
-
-            <button id="btnFeedMarkets" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
-              <div class="flex items-center gap-3">
-                <span class="text-xl">📈</span>
-                <div>
-                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">Market Close (SPX, DOW, NAS)</div>
-                  <div class="text-[11px] text-zinc-500">Major indices with Green/Red indicators</div>
-                </div>
-              </div>
-              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
-            </button>
-
-            <div class="p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 space-y-2">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <span class="text-xl">🏈</span>
-                  <div>
-                    <div class="text-xs font-semibold text-zinc-200">Sports Game Day Feed</div>
-                    <div class="text-[11px] text-zinc-500">ESPN live score or upcoming matchup</div>
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 pt-1">
-                <select id="sportsTeamSelect" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
-                  <option value="BUF">Buffalo Bills</option>
-                  <option value="NYJ">New York Jets</option>
-                  <option value="NYG">New York Giants</option>
-                </select>
-                <button id="btnFeedSports" class="px-3 py-1 bg-zinc-700 hover:bg-amber-500 hover:text-black rounded text-xs font-semibold transition">
-                  Push
-                </button>
-              </div>
+      <!-- Feeds Column -->
+      <div class="lg:col-span-5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 space-y-2.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">⚡ Instant Feed Push</h2>
+        
+        <button id="btnFeedWeather" class="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 text-left transition flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">🌦️</span>
+            <div>
+              <div class="text-xs font-semibold text-zinc-200">Live Weather & Rain</div>
+              <div class="text-[11px] text-zinc-500">Live conditions + blue rain flaps</div>
             </div>
+          </div>
+          <span class="text-xs text-zinc-500 font-flap">Push →</span>
+        </button>
+
+        <button id="btnFeedSubwayStatus" class="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 text-left transition flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">🚇</span>
+            <div>
+              <div class="text-xs font-semibold text-zinc-200">50th St C/E Status</div>
+              <div class="text-[11px] text-zinc-500">Service alerts (Green/Yellow/Red)</div>
+            </div>
+          </div>
+          <span class="text-xs text-zinc-500 font-flap">Push →</span>
+        </button>
+
+        <button id="btnFeedSubwayCount" class="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 text-left transition flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">⏱️</span>
+            <div>
+              <div class="text-xs font-semibold text-zinc-200">50th St C/E Next Trains</div>
+              <div class="text-[11px] text-zinc-500">Next 2 Uptown & Downtown arrivals</div>
+            </div>
+          </div>
+          <span class="text-xs text-zinc-500 font-flap">Push →</span>
+        </button>
+
+        <button id="btnFeedMarkets" class="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 text-left transition flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">📈</span>
+            <div>
+              <div class="text-xs font-semibold text-zinc-200">Market Close (SPX/DOW/NAS)</div>
+              <div class="text-[11px] text-zinc-500">Major indices with Green/Red tiles</div>
+            </div>
+          </div>
+          <span class="text-xs text-zinc-500 font-flap">Push →</span>
+        </button>
+
+        <div class="p-2.5 rounded-lg border border-zinc-800 bg-zinc-800/40 space-y-1.5">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">🏈</span>
+            <span class="text-xs font-semibold text-zinc-200">Sports Game Day Feed</span>
+          </div>
+          <div class="flex gap-2">
+            <select id="sportsTeam" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-flap">
+              <option value="BUF">Buffalo Bills</option>
+              <option value="NYJ">New York Jets</option>
+              <option value="NYG">New York Giants</option>
+            </select>
+            <button id="btnFeedSports" class="px-3 py-1 bg-zinc-700 hover:bg-amber-500 hover:text-black rounded text-xs font-semibold transition">Push</button>
           </div>
         </div>
       </div>
 
-      <!-- Right Column: Composer -->
-      <div class="lg:col-span-7 space-y-5">
-        <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                <span>✍️</span> Ad-Hoc Message Composer
-              </h3>
-              <p class="text-xs text-zinc-400">Type naturally. Characters center automatically on 3 lines.</p>
-            </div>
-            <button id="btnClearComposer" class="text-xs text-zinc-400 hover:text-red-400 transition">
-              Clear
-            </button>
-          </div>
+      <!-- Composer Column -->
+      <div class="lg:col-span-7 bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400">✍️ Message Composer</h2>
+          <button id="btnClear" class="text-xs text-zinc-400 hover:text-rose-400">Clear</button>
+        </div>
 
-          <div class="space-y-2.5 mb-4">
-            <div>
-              <div class="flex justify-between text-[11px] text-zinc-500 mb-1">
-                <span>ROW 1 (TOP)</span>
-                <span id="row1Counter" class="font-mono">0 / 15</span>
-              </div>
-              <input id="inputRow1" type="text" maxlength="25" placeholder="HELLO WORLD" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-mono uppercase tracking-wider">
-            </div>
-            <div>
-              <div class="flex justify-between text-[11px] text-zinc-500 mb-1">
-                <span>ROW 2 (MIDDLE)</span>
-                <span id="row2Counter" class="font-mono">0 / 15</span>
-              </div>
-              <input id="inputRow2" type="text" maxlength="25" placeholder="VESTABOARD NOTE" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-mono uppercase tracking-wider">
-            </div>
-            <div>
-              <div class="flex justify-between text-[11px] text-zinc-500 mb-1">
-                <span>ROW 3 (BOTTOM)</span>
-                <span id="row3Counter" class="font-mono">0 / 15</span>
-              </div>
-              <input id="inputRow3" type="text" maxlength="25" placeholder="{67}{67} HAVE A GREAT DAY {67}{67}" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-mono uppercase tracking-wider">
-            </div>
-          </div>
-
+        <div class="space-y-2">
           <div>
-            <div class="text-[11px] text-zinc-400 mb-2 font-medium">INSERT COLOR FLAP AT CURSOR:</div>
-            <div class="flex flex-wrap gap-1.5">
-              <button class="btnColorInsert px-2.5 py-1 rounded bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700/60 text-blue-300 text-xs font-mono transition" data-code="{67}">🟦 Blue {67}</button>
-              <button class="btnColorInsert px-2.5 py-1 rounded bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-700/60 text-emerald-300 text-xs font-mono transition" data-code="{66}">🟩 Green {66}</button>
-              <button class="btnColorInsert px-2.5 py-1 rounded bg-red-900/40 hover:bg-red-800/60 border border-red-700/60 text-red-300 text-xs font-mono transition" data-code="{63}">🟥 Red {63}</button>
-              <button class="btnColorInsert px-2.5 py-1 rounded bg-amber-900/40 hover:bg-amber-800/60 border border-amber-700/60 text-amber-300 text-xs font-mono transition" data-code="{65}">🟨 Yellow {65}</button>
-              <button class="btnColorInsert px-2.5 py-1 rounded bg-rose-950/60 hover:bg-rose-900/80 border border-rose-700/60 text-rose-300 text-xs font-mono transition" data-code="{62}">❤️ Heart {62}</button>
-              <button class="btnColorInsert px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 text-xs font-mono transition" data-code="{69}">⬜ White {69}</button>
-            </div>
+            <div class="flex justify-between text-[10px] text-zinc-500"><span>ROW 1</span><span id="c1" class="font-flap">0 / 15</span></div>
+            <input id="in1" type="text" maxlength="25" placeholder="HELLO WORLD" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-100 font-flap uppercase tracking-wider focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px] text-zinc-500"><span>ROW 2</span><span id="c2" class="font-flap">0 / 15</span></div>
+            <input id="in2" type="text" maxlength="25" placeholder="VESTABOARD NOTE" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-100 font-flap uppercase tracking-wider focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px] text-zinc-500"><span>ROW 3</span><span id="c3" class="font-flap">0 / 15</span></div>
+            <input id="in3" type="text" maxlength="25" placeholder="{67}{67} HAVE A NICE DAY {67}{67}" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-100 font-flap uppercase tracking-wider focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+        <div>
+          <div class="text-[10px] text-zinc-400 mb-1.5 font-medium">INSERT COLOR FLAP:</div>
+          <div class="flex flex-wrap gap-1.5">
+            <button class="btnColor px-2 py-0.5 rounded bg-blue-950 border border-blue-700 text-blue-300 text-[11px] font-flap" data-code="{67}">🟦 Blue {67}</button>
+            <button class="btnColor px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700 text-emerald-300 text-[11px] font-flap" data-code="{66}">🟩 Green {66}</button>
+            <button class="btnColor px-2 py-0.5 rounded bg-red-950 border border-red-700 text-red-300 text-[11px] font-flap" data-code="{63}">🟥 Red {63}</button>
+            <button class="btnColor px-2 py-0.5 rounded bg-amber-950 border border-amber-700 text-amber-300 text-[11px] font-flap" data-code="{65}">🟨 Yellow {65}</button>
+            <button class="btnColor px-2 py-0.5 rounded bg-rose-950 border border-rose-700 text-rose-300 text-[11px] font-flap" data-code="{62}">❤️ Heart {62}</button>
+            <button class="btnColor px-2 py-0.5 rounded bg-zinc-800 border border-zinc-600 text-zinc-300 text-[11px] font-flap" data-code="{69}">⬜ White {69}</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 3. Editable Daily Routine & Lineup -->
-    <section class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 sm:p-6 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-800">
+    <!-- Routine Schedule Manager -->
+    <section class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 sm:p-5 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-zinc-800">
         <div>
-          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-            <span>📅</span> Editable Daily Routine & Lineup
-          </h3>
-          <p class="text-xs text-zinc-400">Configure time windows, activate modules, and sync directly to GitHub.</p>
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">📅 Editable Daily Routine & Lineup</h2>
+          <p class="text-xs text-zinc-400">Configure time windows and save directly to GitHub.</p>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btnAddRoutineSlot" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition">
-            + Add Slot
-          </button>
-          <button id="btnSaveRoutine" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition flex items-center gap-1.5">
-            <span>💾</span> Save Routine to GitHub
-          </button>
-          <button id="btnExportConfig" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition">
-            Export config.json
-          </button>
+          <button id="btnAddSlot" class="px-2.5 py-1.5 rounded border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200">+ Add Slot</button>
+          <button id="btnSaveRoutine" class="px-3.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow">💾 Save to GitHub</button>
+          <button id="btnExportConfig" class="px-2.5 py-1.5 rounded border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200">Export config.json</button>
         </div>
       </div>
 
-      <div id="routineSlotsList" class="space-y-3"></div>
+      <div id="routineList" class="space-y-2.5"></div>
     </section>
 
   </main>
 
   <!-- Settings Modal -->
   <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span>⚙️</span> API & Cloud Settings
-        </h3>
-        <button id="btnCloseSettings" class="text-zinc-400 hover:text-white text-sm">✕</button>
+        <h3 class="text-sm font-bold text-white">⚙️ API & Cloud Settings</h3>
+        <button id="btnCloseSettings" class="text-zinc-400 hover:text-white">✕</button>
       </div>
 
-      <div class="space-y-3.5">
+      <div class="space-y-3">
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1">Vestaboard Read/Write API Key</label>
-          <input id="settingApiKey" type="password" placeholder="Enter Vestaboard key..." class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
-          <p class="text-[11px] text-zinc-500 mt-1">Used for instant 1-second ad-hoc message sends.</p>
+          <input id="setApiKey" type="password" placeholder="Enter key..." class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-flap">
+          <p class="text-[11px] text-zinc-500 mt-0.5">Used for instant 1-second ad-hoc message sends.</p>
         </div>
 
         <div class="pt-2 border-t border-zinc-800">
           <label class="block text-xs font-medium text-amber-400 mb-1">GitHub Personal Access Token (PAT)</label>
-          <input id="settingGithubToken" type="password" placeholder="ghp_... or github_pat_..." class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
-          <p class="text-[11px] text-zinc-500 mt-1">Allows the web app to save routines directly to GitHub with one click.</p>
+          <input id="setGhToken" type="password" placeholder="ghp_..." class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-flap">
+          <p class="text-[11px] text-zinc-500 mt-0.5">Enables the 'Save to GitHub' 1-click cloud sync.</p>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">GitHub Username</label>
-            <input id="settingGithubOwner" type="text" placeholder="username" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+            <label class="block text-xs text-zinc-400 mb-1">GitHub Username</label>
+            <input id="setGhOwner" type="text" placeholder="username" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-flap">
           </div>
           <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Repository Name</label>
-            <input id="settingGithubRepo" type="text" value="vesta-wx" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+            <label class="block text-xs text-zinc-400 mb-1">Repository Name</label>
+            <input id="setGhRepo" type="text" value="vesta-wx" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-flap">
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-800">
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
           <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Latitude</label>
-            <input id="settingLat" type="number" step="0.0001" value="40.7128" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+            <label class="block text-xs text-zinc-400 mb-1">Latitude</label>
+            <input id="setLat" type="number" step="0.0001" value="40.7128" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-flap">
           </div>
           <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Longitude</label>
-            <input id="settingLon" type="number" step="0.0001" value="-74.0060" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font
+            <label class="block text-xs text-zinc-400 mb-1">Longitude</label>
+            <input id="setLon" type="number" step="0.0001" value="-74.0060" class="w-full bg-black/60 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-flap">
+          </div>
+        </div>
+      </div>
+
+      <button id="btnSaveSettings" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded text-xs transition">
+        Save Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">📄 Export config.json</h3>
+        <button id="btnCloseExport" class="text-zinc-400 hover:text-white">✕</button>
+      </div>
+      <textarea id="exportText" readonly rows="10" class="w-full bg-black border border-zinc-700 rounded p-2.5 text-xs font-flap text-zinc-300"></textarea>
+      <div class="flex justify-end gap-2">
+        <button id="btnCopyJson" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs text-zinc-200">Copy to Clipboard</button>
+        <button id="btnDownloadJson" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black rounded text-xs font-semibold">Download File</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ROWS = 3, COLS = 15;
+    let sound = true, aCtx = null, activeRow = 1;
+
+    let routine = [
+      { id: "1", name: "Morning Weather & Rain", module: "weather", start_time: "07:00", end_time: "08:30", enabled: true },
+      { id: "2", name: "50th St C/E Next Trains", module: "subway_countdown", start_time: "08:30", end_time: "09:30", enabled: true },
+      { id: "3", name: "Hourly Live Weather", module: "weather", start_time: "09:30", end_time: "16:15", enabled: true },
+      { id: "4", name: "Market Close (SPX/DOW/NAS)", module: "markets", start_time: "16:15", end_time: "17:30", enabled: true },
+      { id: "5", name: "Sports (Bills/Jets/Giants)", module: "sports", start_time: "18:00", end_time: "22:00", enabled: true }
+    ];
+
+    let currentLines = ["PARTLY CLOUDY", "68  H:74 L:52", "{67}{67} RAIN: 20% {67}{67}"];
+
+    function playSound() {
+      if (!sound) return;
+      try {
+        if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (aCtx.state === 'suspended') aCtx.resume();
+        const o = aCtx.createOscillator(), g = aCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(320 + Math.random() * 80, aCtx.currentTime);
+        g.gain.setValueAtTime(0.04, aCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, aCtx.currentTime + 0.04);
+        o.connect(g); g.connect(aCtx.destination);
+        o.start(); o.stop(aCtx.currentTime + 0.04);
+      } catch (e) {}
+    }
+
+    function parseLine(line) {
+      const res = [], regex = /\{(\d+)\}|(.)/g;
+      let m;
+      while ((m = regex.exec(line)) !== null) {
+        if (m[1]) res.push({ type: 'c', code: parseInt(m[1], 10) });
+        else res.push({ type: 't', char: m[2] });
+      }
+      return res;
+    }
+
+    function initGrid() {
+      const g = document.getElementById("vestaGrid");
+      g.innerHTML = "";
+      for (let r = 0; r < ROWS; r++) {
+        const row = document.createElement("div");
+        row.className = "flex gap-1 sm:gap-1.5";
+        for (let c = 0; c < COLS; c++) {
+          const bit = document.createElement("div");
+          bit.id = `bit_${r}_${c}`;
+          bit.className = "flap-bit w-6 h-9 sm:w-8 sm:h-12 flex items-center justify-center font-flap font-bold text-sm sm:text-lg text-zinc-100 shadow";
+          bit.textContent = " ";
+          row.appendChild(bit);
+        }
+        g.appendChild(row);
+      }
+    }
+
+    function renderGrid(lines) {
+      for (let r = 0; r < ROWS; r++) {
+        const tokens = parseLine(lines[r] || "");
+        const pad = Math.max(0, Math.floor((COLS - tokens.length) / 2));
+        for (let c = 0; c < COLS; c++) {
+          const bit = document.getElementById(`bit_${r}_${c}`);
+          if (!bit) continue;
+          bit.className = "flap-bit w-6 h-9 sm:w-8 sm:h-12 flex items-center justify-center font-flap font-bold text-sm sm:text-lg text-zinc-100 shadow";
+          const idx = c - pad;
+          if (idx >= 0 && idx < tokens.length) {
+            const tok = tokens[idx];
+            if (tok.type === 'c') {
+              if (tok.code === 62) { bit.classList.add("flap-c-62"); bit.textContent = "❤️"; continue; }
+              bit.classList.add(`flap-c-${tok.code}`);
+              bit.textContent = " ";
+            } else {
+              bit.textContent = tok.char.toUpperCase();
+            }
+          } else {
+            bit.textContent = " ";
+          }
+        }
+      }
+      playSound();
+    }
+
+    function setStatus(msg, err = false) {
+      const t = document.getElementById("statusToast");
+      t.textContent = msg;
+      t.className = `mt-2.5 text-xs text-center font-flap ${err ? 'text-rose-400' : 'text-amber-400'}`;
+    }
+
+    async function sendToBoard(lines) {
+      const key = localStorage.getItem("VESTA_KEY") || "";
+      if (!key) {
+        setStatus("⚠️ Enter your Vestaboard API key in Settings first!", true);
+        document.getElementById("settingsModal").classList.remove("hidden");
+        return;
+      }
+      setStatus("Posting message to Vestaboard Note...");
+      try {
+        const res = await fetch("https://rw.vestaboard.com/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Vestaboard-Read-Write-Key": key },
+          body: JSON.stringify({ text: lines.join("\n") })
+        });
+        if (res.ok) setStatus("✅ Flaps spinning! Successfully posted.");
+        else setStatus(`⚠️ Vestaboard error: ${res.status}`, true);
+      } catch (e) {
+        setStatus(`⚠️ Network error: ${e.message}`, true);
+      }
+    }
+
+    function updateComposer() {
+      const r1 = document.getElementById("in1").value;
+      const r2 = document.getElementById("in2").value;
+      const r3 = document.getElementById("in3").value;
+      document.getElementById("c1").textContent = `${parseLine(r1).length} / 15`;
+      document.getElementById("c2").textContent = `${parseLine(r2).length} / 15`;
+      document.getElementById("c3").textContent = `${parseLine(r3).length} / 15`;
+      currentLines = [r1, r2, r3];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "AD-HOC COMPOSER";
+    }
+
+    ["in1", "in2", "in3"].forEach((id, idx) => {
+      const el = document.getElementById(id);
+      el.addEventListener("focus", () => { activeRow = idx + 1; });
+      el.addEventListener("input", updateComposer);
+    });
+
+    document.querySelectorAll(".btnColor").forEach(b => {
+      b.addEventListener("click", () => {
+        const input = document.getElementById(`in${activeRow}`);
+        if (input) {
+          input.value += b.dataset.code;
+          updateComposer();
+          input.focus();
+        }
+      });
+    });
+
+    document.getElementById("btnClear").addEventListener("click", () => {
+      document.getElementById("in1").value = "";
+      document.getElementById("in2").value = "";
+      document.getElementById("in3").value = "";
+      updateComposer();
+    });
+
+    document.getElementById("btnSendBoard").addEventListener("click", () => sendToBoard(currentLines));
+
+    document.getElementById("btnFeedWeather").addEventListener("click", () => {
+      currentLines = ["PARTLY CLOUDY", "68  H:74 L:52", "{67}{67} RAIN: 20% {67}{67}"];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "WEATHER FEED";
+      setStatus("Loaded weather preview.");
+    });
+
+    document.getElementById("btnFeedSubwayStatus").addEventListener("click", () => {
+      currentLines = ["50TH ST  C / E", "C TRAIN: {66} OK ", "E TRAIN: {66} OK "];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "50TH ST STATUS";
+      setStatus("Loaded subway status preview.");
+    });
+
+    document.getElementById("btnFeedSubwayCount").addEventListener("click", () => {
+      currentLines = ["  50TH ST C/E  ", "UP: C 3M  E 8M ", "DN: E 2M  C 6M "];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "NEXT TRAINS";
+      setStatus("Loaded arrival countdown preview.");
+    });
+
+    document.getElementById("btnFeedMarkets").addEventListener("click", () => {
+      currentLines = ["SPX   +0.4% {66}  ", "DOW   -0.1% {63}  ", "NAS   +0.8% {66}  "];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "MARKET CLOSE";
+      setStatus("Loaded market close preview.");
+    });
+
+    document.getElementById("btnFeedSports").addEventListener("click", () => {
+      const t = document.getElementById("sportsTeam").value;
+      if (t === "BUF") currentLines = [" BUFFALO BILLS ", "NEXT: SUN 1:00P", "  vs DOLPHINS  "];
+      else if (t === "NYJ") currentLines = [" NEW YORK JETS ", "NEXT: SUN 4:25P", "  vs PATRIOTS  "];
+      else currentLines = ["NEW YORK GIANTS", "NEXT: MON 8:15P", "  vs COWBOYS   "];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = `SPORTS (${t})`;
+      setStatus(`Loaded ${t} sports preview.`);
+    });
+
+    function renderRoutine() {
+      const c = document.getElementById("routineList");
+      c.innerHTML = "";
+      routine.forEach((s, i) => {
+        const el = document.createElement("div");
+        el.className = "flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-900/40 gap-2 text-xs";
+        el.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <input type="checkbox" data-i="${i}" class="rt-toggle w-3.5 h-3.5 rounded text-amber-500 bg-zinc-950 border-zinc-700" ${s.enabled ? 'checked' : ''}>
+            <input type="text" data-i="${i}" data-f="name" value="${s.name}" class="rt-name bg-transparent border-b border-transparent hover:border-zinc-700 text-zinc-200 font-medium w-48">
+          </div>
+          <div class="flex items-center gap-2 font-flap">
+            <input type="time" data-i="${i}" data-f="start_time" value="${s.start_time}" class="rt-val bg-black/60 border border-zinc-700 rounded px-1.5 py-0.5 text-zinc-200">
+            <span>to</span>
+            <input type="time" data-i="${i}" data-f="end_time" value="${s.end_time}" class="rt-val bg-black/60 border border-zinc-700 rounded px-1.5 py-0.5 text-zinc-200">
+            <select data-i="${i}" data-f="module" class="rt-val bg-black/60 border border-zinc-700 rounded px-1.5 py-0.5 text-zinc-200">
+              <option value="weather" ${s.module === 'weather' ? 'selected' : ''}>Weather</option>
+              <option value="subway_status" ${s.module === 'subway_status' ? 'selected' : ''}>50th St Status</option>
+              <option value="subway_countdown" ${s.module === 'subway_countdown' ? 'selected' : ''}>Next Trains</option>
+              <option value="markets" ${s.module === 'markets' ? 'selected' : ''}>Markets</option>
+              <option value="sports" ${s.module === 'sports' ? 'selected' : ''}>Sports</option>
+            </select>
+            <button data-i="${i}" class="rt-del text-zinc-500 hover:text-rose-400 p-0.5">✕</button>
+          </div>
+        `;
+        c.appendChild(el);
+      });
+
+      document.querySelectorAll(".rt-toggle").forEach(cb => {
+        cb.addEventListener("change", e => { routine[parseInt(e.target.dataset.i, 10)].enabled = e.target.checked; });
+      });
+      document.querySelectorAll(".rt-name, .rt-val").forEach(inp => {
+        inp.addEventListener("change", e => { routine[parseInt(e.target.dataset.i, 10)][e.target.dataset.f] = e.target.value; });
+      });
+      document.querySelectorAll(".rt-del").forEach(btn => {
+        btn.addEventListener("click", e => {
+          routine.splice(parseInt(e.target.dataset.i, 10), 1);
+          renderRoutine();
+        });
+      });
+    }
+
+    document.getElementById("btnAddSlot").addEventListener("click", () => {
+      routine.push({ id: String(Date.now()), name: "New Slot", module: "weather", start_time: "12:00", end_time: "13:00", enabled: true });
+      renderRoutine();
+    });
+
+    function getConfig() {
+      return {
+        timezone: localStorage.getItem("VESTA_TZ") || "America/New_York",
+        coordinates: {
+          latitude: parseFloat(localStorage.getItem("VESTA_LAT") || "40.7128"),
+          longitude: parseFloat(localStorage.getItem("VESTA_LON") || "-74.0060")
+        },
+        subway: { station_name: "50th St (C/E)", station_id: "A25", lines: ["C", "E"] },
+        markets: { indices: ["^GSPC", "^DJI", "^IXIC"], labels: ["SPX", "DOW", "NAS"] },
+        sports: { active_team: "BUF" },
+        routine: routine
+      };
+    }
+
+    async function saveToGitHub() {
+      try { localStorage.setItem("VESTA_ROUTINE", JSON.stringify(routine)); } catch (e) {}
+      const token = localStorage.getItem("GH_TOKEN"), owner = localStorage.getItem("GH_OWNER"), repo = localStorage.getItem("GH_REPO") || "vesta-wx";
+      if (!token || !owner) {
+        setStatus("✅ Saved locally. (Add GitHub Token in Settings to sync to cloud).");
+        return;
+      }
+      setStatus("Syncing to GitHub repository...");
+      const jsonStr = JSON.stringify(getConfig(), null, 2);
+      try {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/config.json`;
+        const getRes = await fetch(url, { headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" } });
+        let sha = getRes.ok ? (await getRes.json()).sha : null;
+        const putRes = await fetch(url, {
+          method: "PUT",
+          headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "Update routine from dashboard", content: btoa(unescape(encodeURIComponent(jsonStr))), sha: sha })
+        });
+        if (putRes.ok) setStatus("✅ Synced to GitHub repository successfully!");
+        else setStatus(`⚠️ GitHub error: ${putRes.status}`, true);
+      } catch (e) {
+        setStatus(`⚠️ Saved locally: ${e.message}`, true);
+      }
+    }
+
+    document.getElementById("btnSaveRoutine").addEventListener("click", saveToGitHub);
+
+    document.getElementById("btnExportConfig").addEventListener("click", () => {
+      document.getElementById("exportText").value = JSON.stringify(getConfig(), null, 2);
+      document.getElementById("exportModal").classList.remove("hidden");
+    });
+    document.getElementById("btnCloseExport").addEventListener("click", () => {
+      document.getElementById("exportModal").classList.add("hidden");
+    });
+    document.getElementById("btnCopyJson").addEventListener("click", () => {
+      const t = document.getElementById("exportText");
+      t.select(); document.execCommand("copy");
+      setStatus("📋 Copied to clipboard!");
+    });
+    document.getElementById("btnDownloadJson").addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getConfig(), null, 2));
+      a.download = "config.json";
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+
+    document.getElementById("btnOpenSettings").addEventListener("click", () => {
+      try {
+        document.getElementById("setApiKey").value = localStorage.getItem("VESTA_KEY") || "";
+        document.getElementById("setGhToken").value = localStorage.getItem("GH_TOKEN") || "";
+        document.getElementById("setGhOwner").value = localStorage.getItem("GH_OWNER") || "";
+        document.getElementById("setGhRepo").value = localStorage.getItem("GH_REPO") || "vesta-wx";
+        document.getElementById("setLat").value = localStorage.getItem("VESTA_LAT") || "40.7128";
+        document.getElementById("setLon").value = localStorage.getItem("VESTA_LON") || "-74.0060";
+      } catch (e) {}
+      document.getElementById("settingsModal").classList.remove("hidden");
+    });
+    document.getElementById("btnCloseSettings").addEventListener("click", () => {
+      document.getElementById("settingsModal").classList.add("hidden");
+    });
+    document.getElementById("btnSaveSettings").addEventListener("click", () => {
+      try {
+        localStorage.setItem("VESTA_KEY", document.getElementById("setApiKey").value.trim());
+        localStorage.setItem("GH_TOKEN", document.getElementById("setGhToken").value.trim());
+        localStorage.setItem("GH_OWNER", document.getElementById("setGhOwner").value.trim());
+        localStorage.setItem("GH_REPO", document.getElementById("setGhRepo").value.trim());
+        localStorage.setItem("VESTA_LAT", document.getElementById("setLat").value.trim());
+        localStorage.setItem("VESTA_LON", document.getElementById("setLon").value.trim());
+      } catch (e) {}
+      document.getElementById("settingsModal").classList.add("hidden");
+      setStatus("✅ Settings saved.");
+    });
+
+    document.getElementById("btnSound").addEventListener("click", () => {
+      sound = !sound;
+      document.getElementById("soundIcon").textContent = sound ? "🔊" : "🔇";
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      try {
+        const s = localStorage.getItem("VESTA_ROUTINE");
+        if (s) routine = JSON.parse(s);
+      } catch (e) {}
+      initGrid();
+      renderGrid(currentLines);
+      renderRoutine();
+    });
+  </script>
+</body>
+</html>
