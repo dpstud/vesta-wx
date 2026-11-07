@@ -70,7 +70,7 @@
   <!-- Mobile-Optimized Studio Container -->
   <main class="max-w-2xl mx-auto px-4 py-4 sm:py-6 flex-1 w-full space-y-6">
 
-    <!-- 1. Interactive Studio: Display + Text Input -->
+    <!-- 1. Interactive Studio: Display + Text Input (Glued for Zero-Scroll) -->
     <section class="bg-zinc-900/70 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-4">
       <div>
         <div class="flex items-center justify-between mb-2.5">
@@ -213,19 +213,18 @@
       </div>
     </section>
 
-    <!-- 3. Daily Routine with Overlap Detection & Mobile 2-Tier Cards -->
+    <!-- 3. Daily Routine with Overlap Detection & Automatic Background Sync -->
     <section class="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
+      <div class="flex items-center justify-between pb-2 border-b border-white/10">
         <div>
           <h2 class="text-sm font-semibold text-white flex items-center gap-2">
             <span>📅</span> Daily Lineup & Routine
           </h2>
-          <p class="text-xs text-zinc-400">Overlapping windows alternate evenly on each 5-minute run.</p>
+          <p class="text-xs text-zinc-400">Overlapping windows alternate evenly every 5 minutes.</p>
         </div>
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <button id="btnAddSlot" class="px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs text-zinc-200">+ Slot</button>
-          <button id="btnSaveRoutine" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow flex items-center gap-1">💾 Save to GitHub</button>
-          <button id="btnExportConfig" class="px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs text-zinc-200">Export</button>
+        <div class="flex items-center gap-2.5">
+          <span id="syncBadge" class="text-[11px] text-zinc-500 font-flap transition">Auto-saved</span>
+          <button id="btnAddSlot" class="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-200 transition">+ Add Slot</button>
         </div>
       </div>
 
@@ -256,9 +255,9 @@
         </div>
 
         <div class="pt-2 border-t border-white/10">
-          <label class="block text-xs font-medium text-amber-400 mb-1">GitHub Personal Access Token</label>
+          <label class="block text-xs font-medium text-amber-400 mb-1">GitHub Personal Access Token (Optional)</label>
           <input id="setGhToken" type="password" placeholder="ghp_..." class="w-full bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-flap focus:outline-none focus:border-amber-500">
-          <p class="text-[10px] text-zinc-500 mt-0.5">Enables 1-click cloud sync for routine changes.</p>
+          <p class="text-[10px] text-zinc-500 mt-0.5">Enables automatic background cloud-sync for routine edits.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -287,21 +286,6 @@
       <button id="btnSaveSettings" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg text-xs transition">
         Save Settings
       </button>
-    </div>
-  </div>
-
-  <!-- Export Modal -->
-  <div id="exportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-zinc-900 border border-white/10 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-3">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white">📄 Export config.json</h3>
-        <button id="btnCloseExport" class="text-zinc-400 hover:text-white p-1">✕</button>
-      </div>
-      <textarea id="exportText" readonly rows="9" class="w-full bg-black border border-white/10 rounded-lg p-2.5 text-xs font-flap text-zinc-300 focus:outline-none"></textarea>
-      <div class="flex justify-end gap-2">
-        <button id="btnCopyJson" class="px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-lg text-xs text-white">Copy JSON</button>
-        <button id="btnDownloadJson" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-semibold">Download</button>
-      </div>
     </div>
   </div>
 
@@ -531,7 +515,7 @@
         }`;
 
         el.innerHTML = `
-          <!-- Row 1: Checkbox, Title, Rotation Badge, Delete Button -->
+          <!-- Row 1: Title, Status, Badge, Delete -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
               <input type="checkbox" data-i="${i}" class="rt-toggle w-4 h-4 rounded text-amber-500 bg-black border-zinc-700 shrink-0" ${s.enabled ? 'checked' : ''}>
@@ -543,7 +527,7 @@
             </div>
           </div>
 
-          <!-- Row 2: Apple Control Strip -->
+          <!-- Row 2: Control Strip -->
           <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5 flex-wrap sm:flex-nowrap">
             <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-flap bg-black/40 px-2 py-1 rounded-lg border border-white/5">
               <span>🕒</span>
@@ -565,19 +549,32 @@
       });
 
       document.querySelectorAll(".rt-toggle").forEach(cb => {
-        cb.addEventListener("change", e => { routine[parseInt(e.target.dataset.i, 10)].enabled = e.target.checked; renderRoutine(); });
+        cb.addEventListener("change", e => { 
+          routine[parseInt(e.target.dataset.i, 10)].enabled = e.target.checked; 
+          renderRoutine();
+          autoSaveRoutine();
+        });
       });
       document.querySelectorAll(".rt-name, .rt-val").forEach(inp => {
-        inp.addEventListener("change", e => { routine[parseInt(e.target.dataset.i, 10)][e.target.dataset.f] = e.target.value; renderRoutine(); });
+        inp.addEventListener("change", e => { 
+          routine[parseInt(e.target.dataset.i, 10)][e.target.dataset.f] = e.target.value; 
+          renderRoutine();
+          autoSaveRoutine();
+        });
       });
       document.querySelectorAll(".rt-del").forEach(btn => {
-        btn.addEventListener("click", e => { routine.splice(parseInt(e.target.dataset.i, 10), 1); renderRoutine(); });
+        btn.addEventListener("click", e => { 
+          routine.splice(parseInt(e.target.dataset.i, 10), 1); 
+          renderRoutine();
+          autoSaveRoutine();
+        });
       });
     }
 
     document.getElementById("btnAddSlot").addEventListener("click", () => {
       routine.push({ id: String(Date.now()), name: "New Slot", module: "weather", start_time: "12:00", end_time: "13:00", enabled: true });
       renderRoutine();
+      autoSaveRoutine();
     });
 
     function getConfig() {
@@ -594,14 +591,18 @@
       };
     }
 
-    async function saveToGitHub() {
+    // Frictionless Auto-Save (Local + GitHub in background)
+    async function autoSaveRoutine() {
+      const badge = document.getElementById("syncBadge");
+      if (badge) badge.textContent = "Saving...";
       try { localStorage.setItem("VESTA_ROUTINE", JSON.stringify(routine)); } catch (e) {}
+      
       const token = localStorage.getItem("GH_TOKEN"), owner = localStorage.getItem("GH_OWNER"), repo = localStorage.getItem("GH_REPO") || "vesta-wx";
       if (!token || !owner) {
-        setStatus("✅ Saved locally. (Add GitHub Token in Settings to sync to cloud).");
+        if (badge) badge.textContent = "Auto-saved ✓";
         return;
       }
-      setStatus("Syncing to GitHub repository...");
+      
       const jsonStr = JSON.stringify(getConfig(), null, 2);
       try {
         const url = `https://api.github.com/repos/${owner}/${repo}/contents/config.json`;
@@ -610,35 +611,14 @@
         const putRes = await fetch(url, {
           method: "PUT",
           headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "Update routine from Studio dashboard", content: btoa(unescape(encodeURIComponent(jsonStr))), sha: sha })
+          body: JSON.stringify({ message: "Auto-save routine from Studio", content: btoa(unescape(encodeURIComponent(jsonStr))), sha: sha })
         });
-        if (putRes.ok) setStatus("✅ Synced to GitHub repository successfully!");
-        else setStatus(`⚠️ GitHub error: ${putRes.status}`, true);
+        if (putRes.ok && badge) badge.textContent = "Cloud synced ✓";
+        else if (badge) badge.textContent = "Auto-saved ✓";
       } catch (e) {
-        setStatus(`⚠️ Saved locally: ${e.message}`, true);
+        if (badge) badge.textContent = "Auto-saved ✓";
       }
     }
-
-    document.getElementById("btnSaveRoutine").addEventListener("click", saveToGitHub);
-
-    document.getElementById("btnExportConfig").addEventListener("click", () => {
-      document.getElementById("exportText").value = JSON.stringify(getConfig(), null, 2);
-      document.getElementById("exportModal").classList.remove("hidden");
-    });
-    document.getElementById("btnCloseExport").addEventListener("click", () => {
-      document.getElementById("exportModal").classList.add("hidden");
-    });
-    document.getElementById("btnCopyJson").addEventListener("click", () => {
-      const t = document.getElementById("exportText");
-      t.select(); document.execCommand("copy");
-      setStatus("📋 Copied to clipboard!");
-    });
-    document.getElementById("btnDownloadJson").addEventListener("click", () => {
-      const a = document.createElement("a");
-      a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getConfig(), null, 2));
-      a.download = "config.json";
-      document.body.appendChild(a); a.click(); a.remove();
-    });
 
     document.getElementById("btnOpenSettings").addEventListener("click", () => {
       try {
@@ -665,6 +645,7 @@
       } catch (e) {}
       document.getElementById("settingsModal").classList.add("hidden");
       setStatus("✅ Settings saved.");
+      autoSaveRoutine();
     });
 
     document.getElementById("btnSound").addEventListener("click", () => {
