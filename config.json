@@ -33,7 +33,7 @@
       "module": "subway_countdown",
       "start_time": "08:30",
       "end_time": "21:30",
-      "enabled": true,
+      "enabled": false,
       "name": "50th St Next Trains"
     },
     {
