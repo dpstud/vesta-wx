@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Vestaboard Note Universal Controller
+Vestaboard Note Universal Controller 
 Manages scheduled routines, overlapping rotations, multi-team sports, Breckenridge snow conditions,
 Manhattan Cruise Terminal (Piers 88-92), Air Quality & UV, and modular feeds for the 3x15 Note grid.
 """
