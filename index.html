@@ -35,6 +35,8 @@
       z-index: 10;
     }
     .flap-c-67 { background-color: #1d4ed8 !important; color: transparent !important; }
+    .flap-c-64 { background-color: #ea580c !important; color: transparent !important; }
+    .flap-c-68 { background-color: #7e22ce !important; color: transparent !important; }
     .flap-c-66 { background-color: #15803d !important; color: transparent !important; }
     .flap-c-63 { background-color: #b91c1c !important; color: transparent !important; }
     .flap-c-65 { background-color: #b45309 !important; color: transparent !important; }
@@ -559,9 +561,9 @@
       if (sendAfter) sendToBoard(currentLines);
     }
     function loadSubwayCount() {
-      currentLines = [" {67} 50TH ST C/E ", "UP: C 3M   E 8M", "DN: E 2M   C 6M"];
+      currentLines = ["  50TH ST C/E  ", "UP: {67}C 2M {67}E 7M", "DN: {67}E 4M {64}F 6M"];
       renderGrid(currentLines);
-      document.getElementById("displayMode").textContent = "NEXT TRAINS";
+      document.getElementById("displayMode").textContent = "50TH ST NEXT TRAINS";
     }
     function loadMarkets() {
       currentLines = ["SPX   +0.4% {66}  ", "DOW   -0.1% {63}  ", "NAS   +0.8% {66}  "];
