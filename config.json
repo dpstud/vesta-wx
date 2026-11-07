@@ -33,7 +33,7 @@
       "module": "weather",
       "start_time": "07:00",
       "end_time": "08:30",
-      "enabled": true,
+      "enabled": false,
       "name": "Weather & Rain"
     },
     {
