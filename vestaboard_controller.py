@@ -257,7 +257,60 @@ def get_sports(team_code: str = 'BUF') -> list[str]:
   ]
 
 
-def resolve_active_module(config: dict) -> str:
+def get_breck() -> list[str]:
+  new_snow = 0
+  try:
+    snow_url = 'https://api.open-meteo.com/v1/forecast?latitude=39.48&longitude=-106.07&daily=snowfall_sum&timezone=America%2FDenver&precipitation_unit=inch'
+    snow_res = requests.get(snow_url, timeout=8).json()
+    new_snow = round(snow_res.get('daily', {}).get('snowfall_sum', [0])[0])
+  except Exception as e:
+    print(f'Breck snow API error: {e}')
+
+  open_lifts, total_lifts = 0, 35
+  open_trails, total_trails = 0, 187
+
+  try:
+    terrain_url = 'https://cache.snow.com/api/TerrainApi/GetTerrainStatus'
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    res = requests.post(
+        terrain_url, data='SiteId=2', headers=headers, timeout=8
+    ).json()
+
+    lifts = res.get('Lifts', [])
+    if lifts:
+      total_lifts = len(lifts)
+      open_lifts = sum(
+          1 for l in lifts if str(l.get('Status', '')).lower() == 'open'
+      )
+
+    trails = res.get('Trails', [])
+    if trails:
+      total_trails = len(trails)
+      open_trails = sum(
+          1 for t in trails if str(t.get('Status', '')).lower() == 'open'
+      )
+  except Exception:
+    try:
+      liftie_res = requests.get(
+          'https://liftie.info/api/resort/breck', timeout=8
+      ).json()
+      stats = liftie_res.get('stats', {})
+      open_lifts = stats.get('open', 0)
+      closed_lifts = stats.get('closed', 0)
+      hold_lifts = stats.get('hold', 0)
+      total_lifts = (open_lifts + closed_lifts + hold_lifts) or 35
+    except Exception:
+      pass
+
+  snow_str = f'+{new_snow}" SNOW' if new_snow > 0 else f'{new_snow}" SNOW'
+  row1 = f'BRECK {snow_str:>9}'.ljust(15)[:15]
+  row2 = f'LIFTS: {open_lifts:>2}/{total_lifts:<2} OP'.ljust(15)[:15]
+  row3 = f'TRAILS: {open_trails:>3}/{total_trails:<3}'.ljust(15)[:15]
+
+  return [row1, row2, row3]
+
+
+def resolve_active_module(config: dict) -> tuple[str, str]:
   tz_name = config.get('timezone', 'America/New_York')
   now = (
       datetime.datetime.now(ZoneInfo(tz_name))
@@ -266,15 +319,39 @@ def resolve_active_module(config: dict) -> str:
   )
   current_hm = now.strftime('%H:%M')
 
+  active_slots = []
   for slot in config.get('routine', []):
     if not slot.get('enabled', True):
       continue
-    if slot.get('start_time', '00:00') <= current_hm < slot.get(
-        'end_time', '23:59'
-    ):
-      print(f'Active Slot: {slot.get("name")} -> {slot.get("module")}')
-      return slot.get('module')
-  return 'weather'
+    start = slot.get('start_time', '00:00')
+    end = slot.get('end_time', '23:59')
+    if start <= current_hm < end:
+      active_slots.append(slot)
+
+  if not active_slots:
+    print(f'[{current_hm} {tz_name}] Outside active routine hours (Quiet Mode).')
+    return None, None
+
+  bucket = (now.hour * 60 + now.minute) // 5
+  chosen_slot = active_slots[bucket % len(active_slots)]
+  module = chosen_slot.get('module')
+
+  team = 'BUF'
+  if module == 'sports':
+    teams = chosen_slot.get('teams', ['BUF'])
+    if not teams:
+      teams = ['BUF']
+    team = teams[bucket % len(teams)]
+    print(
+        f'[{current_hm}] Sports slot active -> Selected team {team} (from'
+        f' {teams})'
+    )
+  else:
+    print(
+        f'[{current_hm}] Active slot -> {module} ({chosen_slot.get("name", "")})'
+    )
+
+  return module, team
 
 
 def send_to_vestaboard(lines: list[str], dry_run: bool = False):
@@ -309,10 +386,11 @@ def main():
           'subway_countdown',
           'markets',
           'sports',
+          'breck',
       ],
   )
   parser.add_argument(
-      '--team', type=str, default='BUF', choices=['BUF', 'NYJ', 'NYG']
+      '--team', type=str, default='', choices=['', 'BUF', 'NYJ', 'NYG']
   )
   parser.add_argument('--config', type=str, default='config.json')
   parser.add_argument('--test', action='store_true')
@@ -323,13 +401,18 @@ def main():
     with open(args.config, 'r', encoding='utf-8') as f:
       config = json.load(f)
 
-  module_to_run = (
-      args.module if args.module else resolve_active_module(config)
-  )
+  if args.module:
+    module_to_run = args.module
+    team = args.team or config.get('sports', {}).get('active_team', 'BUF')
+  else:
+    module_to_run, team = resolve_active_module(config)
+
+  if not module_to_run:
+    sys.exit(0)
+
   coords = config.get(
       'coordinates', {'latitude': 40.7128, 'longitude': -74.0060}
   )
-  team = args.team or config.get('sports', {}).get('active_team', 'BUF')
 
   if module_to_run == 'weather':
     lines = get_weather(coords['latitude'], coords['longitude'])
@@ -341,6 +424,8 @@ def main():
     lines = get_markets()
   elif module_to_run == 'sports':
     lines = get_sports(team)
+  elif module_to_run == 'breck':
+    lines = get_breck()
   else:
     lines = get_weather(coords['latitude'], coords['longitude'])
 
