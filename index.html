@@ -40,6 +40,24 @@
     .flap-c-65 { background-color: #b45309 !important; color: transparent !important; }
     .flap-c-69 { background-color: #f4f4f5 !important; color: transparent !important; }
     .flap-c-62 { background-color: #9f1239 !important; color: #ffe4e6 !important; }
+
+    /* Native Dark Time Pickers for iOS & Android */
+    input[type="time"] {
+      color-scheme: dark;
+      -webkit-appearance: none;
+      min-height: 36px;
+    }
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8);
+      cursor: pointer;
+    }
+    .new-slot-pulse {
+      animation: slotPulse 2s cubic-bezier(0, 0, 0.2, 1) 2;
+    }
+    @keyframes slotPulse {
+      0%, 100% { border-color: rgba(245, 158, 11, 0.2); box-shadow: none; }
+      50% { border-color: rgba(245, 158, 11, 0.8); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
+    }
   </style>
 </head>
 <body class="bg-black text-zinc-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-black pb-12">
@@ -67,10 +85,10 @@
     </div>
   </header>
 
-  <!-- Mobile-Optimized Studio Container -->
+  <!-- Studio Container -->
   <main class="max-w-2xl mx-auto px-4 py-4 sm:py-6 flex-1 w-full space-y-6">
 
-    <!-- 1. Interactive Studio: Display + Text Input (Glued for Zero-Scroll) -->
+    <!-- 1. Interactive Studio: Display + Text Input -->
     <section class="bg-zinc-900/70 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-4">
       <div>
         <div class="flex items-center justify-between mb-2.5">
@@ -213,7 +231,7 @@
       </div>
     </section>
 
-    <!-- 3. Daily Routine with Overlap Detection & Automatic Background Sync -->
+    <!-- 3. Daily Routine with Dynamic Typography & Auto-Save -->
     <section class="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-white/10">
         <div>
@@ -293,13 +311,21 @@
     const ROWS = 3, COLS = 15;
     let sound = true, aCtx = null, activeRow = 1;
 
+    const MODULES = {
+      weather: { icon: "🌦️", name: "Weather & Rain" },
+      subway_status: { icon: "🚇", name: "50th St Status" },
+      subway_countdown: { icon: "⏱️", name: "50th St Next Trains" },
+      markets: { icon: "📈", name: "Market Close" },
+      sports: { icon: "🏈", name: "Sports Game Day" }
+    };
+
     let routine = [
-      { id: "1", name: "Morning Weather", module: "weather", start_time: "07:00", end_time: "08:30", enabled: true },
-      { id: "2", name: "50th St Next Trains", module: "subway_countdown", start_time: "08:30", end_time: "09:30", enabled: true },
-      { id: "3", name: "50th St Status (Rotates)", module: "subway_status", start_time: "08:30", end_time: "09:30", enabled: true },
-      { id: "4", name: "Daytime Live Weather", module: "weather", start_time: "09:30", end_time: "16:15", enabled: true },
-      { id: "5", name: "Market Close (SPX/DOW/NAS)", module: "markets", start_time: "16:15", end_time: "17:30", enabled: true },
-      { id: "6", name: "Evening Sports Feed", module: "sports", start_time: "18:00", end_time: "22:00", enabled: true }
+      { id: "1", module: "weather", start_time: "07:00", end_time: "08:30", enabled: true },
+      { id: "2", module: "subway_countdown", start_time: "08:30", end_time: "09:30", enabled: true },
+      { id: "3", module: "subway_status", start_time: "08:30", end_time: "09:30", enabled: true },
+      { id: "4", module: "weather", start_time: "09:30", end_time: "16:15", enabled: true },
+      { id: "5", module: "markets", start_time: "16:15", end_time: "17:30", enabled: true },
+      { id: "6", module: "sports", start_time: "18:00", end_time: "22:00", enabled: true }
     ];
 
     let currentLines = ["PARTLY CLOUDY", "68  H:74 L:52", "{67}{67} RAIN: 20% {67}{67}"];
@@ -496,7 +522,7 @@
       return overlapMap;
     }
 
-    function renderRoutine() {
+    function renderRoutine(highlightId = null) {
       const c = document.getElementById("routineList");
       c.innerHTML = "";
       const overlaps = detectOverlaps();
@@ -506,20 +532,26 @@
 
       routine.forEach((s, i) => {
         const isOverlapping = overlaps.has(i);
+        const isHighlighted = (s.id === highlightId);
+        const mod = MODULES[s.module] || { icon: "⚡", name: s.module };
         const el = document.createElement("div");
+        el.id = `slot_${s.id}`;
         
         el.className = `p-3.5 rounded-xl border transition space-y-2.5 ${
-          isOverlapping 
-            ? 'border-indigo-500/40 bg-indigo-950/20 shadow-sm' 
-            : 'border-white/10 bg-zinc-950/60'
+          isHighlighted 
+            ? 'new-slot-pulse border-amber-500 bg-amber-950/20 shadow-lg shadow-amber-500/10'
+            : (isOverlapping ? 'border-indigo-500/40 bg-indigo-950/20 shadow-sm' : 'border-white/10 bg-zinc-950/60')
         }`;
 
         el.innerHTML = `
-          <!-- Row 1: Title, Status, Badge, Delete -->
+          <!-- Row 1: Checkbox, Pure Typography Title, Badge, Delete -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
               <input type="checkbox" data-i="${i}" class="rt-toggle w-4 h-4 rounded text-amber-500 bg-black border-zinc-700 shrink-0" ${s.enabled ? 'checked' : ''}>
-              <input type="text" data-i="${i}" data-f="name" value="${s.name}" class="rt-name bg-transparent border-b border-transparent hover:border-zinc-700 text-sm text-zinc-100 font-medium truncate w-full focus:outline-none focus:border-amber-500">
+              <span class="text-sm font-medium text-white truncate flex items-center gap-1.5">
+                <span>${mod.icon}</span>
+                <span>${mod.name}</span>
+              </span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               ${isOverlapping ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-flap border border-indigo-500/30">⇄ Rotates</span>' : ''}
@@ -527,20 +559,25 @@
             </div>
           </div>
 
-          <!-- Row 2: Control Strip -->
-          <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5 flex-wrap sm:flex-nowrap">
-            <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-flap bg-black/40 px-2 py-1 rounded-lg border border-white/5">
-              <span>🕒</span>
-              <input type="time" data-i="${i}" data-f="start_time" value="${s.start_time}" class="rt-val bg-transparent text-white focus:outline-none">
-              <span class="text-zinc-600">to</span>
-              <input type="time" data-i="${i}" data-f="end_time" value="${s.end_time}" class="rt-val bg-transparent text-white focus:outline-none">
+          <!-- Row 2: Apple Control Strip with High-Contrast Mobile Time Pickers -->
+          <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-white/5 flex-wrap sm:flex-nowrap">
+            <div class="flex items-center gap-2 text-xs text-zinc-300 font-flap bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 w-full sm:w-auto justify-between sm:justify-start">
+              <div class="flex items-center gap-1.5">
+                <span class="text-zinc-400">START</span>
+                <input type="time" data-i="${i}" data-f="start_time" value="${s.start_time}" class="rt-val bg-zinc-900 border border-white/15 rounded px-1.5 py-1 text-white font-flap focus:border-amber-500 focus:outline-none text-xs">
+              </div>
+              <span class="text-zinc-500 font-sans">→</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-zinc-400">END</span>
+                <input type="time" data-i="${i}" data-f="end_time" value="${s.end_time}" class="rt-val bg-zinc-900 border border-white/15 rounded px-1.5 py-1 text-white font-flap focus:border-amber-500 focus:outline-none text-xs">
+              </div>
             </div>
 
-            <select data-i="${i}" data-f="module" class="rt-val bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-flap text-right sm:text-left">
+            <select data-i="${i}" data-f="module" class="rt-val bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-flap text-right sm:text-left">
               <option value="weather" ${s.module === 'weather' ? 'selected' : ''}>🌦️ Weather</option>
               <option value="subway_status" ${s.module === 'subway_status' ? 'selected' : ''}>🚇 50th St Status</option>
               <option value="subway_countdown" ${s.module === 'subway_countdown' ? 'selected' : ''}>⏱️ Next Trains</option>
-              <option value="markets" ${s.module === 'markets' ? 'selected' : ''}>📈 Market Close</option>
+              <option value="markets" ${s.module === 'markets' ? 'selected' : ''}>📈 Markets</option>
               <option value="sports" ${s.module === 'sports' ? 'selected' : ''}>🏈 Sports</option>
             </select>
           </div>
@@ -555,7 +592,7 @@
           autoSaveRoutine();
         });
       });
-      document.querySelectorAll(".rt-name, .rt-val").forEach(inp => {
+      document.querySelectorAll(".rt-val").forEach(inp => {
         inp.addEventListener("change", e => { 
           routine[parseInt(e.target.dataset.i, 10)][e.target.dataset.f] = e.target.value; 
           renderRoutine();
@@ -572,12 +609,44 @@
     }
 
     document.getElementById("btnAddSlot").addEventListener("click", () => {
-      routine.push({ id: String(Date.now()), name: "New Slot", module: "weather", start_time: "12:00", end_time: "13:00", enabled: true });
-      renderRoutine();
+      let nextStart = "12:00";
+      let nextEnd = "13:00";
+      if (routine.length > 0) {
+        const lastSlot = routine[routine.length - 1];
+        nextStart = lastSlot.end_time || "12:00";
+        const [h, m] = nextStart.split(":").map(Number);
+        const endH = (h + 1) % 24;
+        nextEnd = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      }
+
+      const newId = String(Date.now());
+      routine.push({ 
+        id: newId, 
+        module: "weather", 
+        start_time: nextStart, 
+        end_time: nextEnd, 
+        enabled: true 
+      });
+
+      renderRoutine(newId);
       autoSaveRoutine();
+
+      setTimeout(() => {
+        const newEl = document.getElementById(`slot_${newId}`);
+        if (newEl) {
+          newEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 50);
+
+      setStatus("✨ New slot added below — choose module and time.");
     });
 
     function getConfig() {
+      const routineExport = routine.map(r => ({
+        ...r,
+        name: MODULES[r.module]?.name || r.module
+      }));
+
       return {
         timezone: localStorage.getItem("VESTA_TZ") || "America/New_York",
         coordinates: {
@@ -587,11 +656,10 @@
         subway: { station_name: "50th St (C/E)", station_id: "A25", lines: ["C", "E"] },
         markets: { indices: ["^GSPC", "^DJI", "^IXIC"], labels: ["SPX", "DOW", "NAS"] },
         sports: { active_team: "BUF" },
-        routine: routine
+        routine: routineExport
       };
     }
 
-    // Frictionless Auto-Save (Local + GitHub in background)
     async function autoSaveRoutine() {
       const badge = document.getElementById("syncBadge");
       if (badge) badge.textContent = "Saving...";
