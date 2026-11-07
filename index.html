@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Vestaboard Note Control Center</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .font-mono-flap { font-family: 'JetBrains Mono', monospace; }
+    .flap-bit {
+      position: relative;
+      background: #121316;
+      border: 1px solid #27272a;
+      border-radius: 4px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.5);
+      user-select: none;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .flap-bit::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.85);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+      z-index: 10;
+    }
+    .flap-color-blue { background-color: #1e3a8a !important; color: transparent !important; }
+    .flap-color-green { background-color: #14532d !important; color: transparent !important; }
+    .flap-color-red { background-color: #7f1d1d !important; color: transparent !important; }
+    .flap-color-yellow { background-color: #713f12 !important; color: transparent !important; }
+    .flap-color-orange { background-color: #7c2d12 !important; color: transparent !important; }
+    .flap-color-violet { background-color: #581c87 !important; color: transparent !important; }
+    .flap-color-white { background-color: #e4e4e7 !important; color: transparent !important; }
+    .flap-color-heart { background-color: #991b1b !important; color: #fecdd3 !important; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-black">
+
+  <header class="border-b border-zinc-800/80 bg-zinc-900/50 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center font-bold text-black shadow-lg shadow-amber-500/20">
+          V
+        </div>
+        <div>
+          <h1 class="text-base font-semibold tracking-tight text-white flex items-center gap-2">
+            Vestaboard Note
+            <span class="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-amber-400 font-mono">3×15</span>
+          </h1>
+          <p class="text-xs text-zinc-400">Personal Dashboard & Cloud Manager</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnSoundToggle" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/80 text-xs font-medium text-zinc-300 transition flex items-center gap-1.5">
+          <span id="soundIcon">🔊</span> Sound
+        </button>
+        <button id="btnOpenSettings" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold shadow-md transition flex items-center gap-1.5">
+          <span>⚙️</span> API Settings
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 sm:px-6 flex-1 w-full space-y-8">
+
+    <!-- 1. Live Virtual Display -->
+    <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/80 relative overflow-hidden">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Live Virtual Note Display</h2>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-zinc-400">
+          <span id="displayModeBadge" class="px-2.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono">AD-HOC COMPOSER</span>
+          <button id="btnPushCurrent" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg transition text-xs flex items-center gap-1.5 shadow">
+            <span>🚀</span> Send to Board
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-black/95 p-3 sm:p-5 rounded-xl border border-zinc-800 shadow-inner overflow-x-auto flex justify-center">
+        <div id="vestaGrid" class="grid grid-rows-3 gap-1.5 sm:gap-2 inline-block"></div>
+      </div>
+
+      <div id="statusToast" class="mt-3 text-xs text-center text-zinc-400 min-h-[1.25rem] transition-all duration-300 font-mono">
+        Ready to post updates
+      </div>
+    </section>
+
+    <!-- 2. Two-Column Workspace -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Feeds -->
+      <div class="lg:col-span-5 space-y-5">
+        <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5">
+          <h3 class="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+            <span>⚡</span> One-Click Feed Push
+          </h3>
+          <p class="text-xs text-zinc-400 mb-4">Preview and instantly post live feeds to your Note.</p>
+
+          <div class="space-y-2.5">
+            <button id="btnFeedWeather" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🌦️</span>
+                <div>
+                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">Live Weather & Rain</div>
+                  <div class="text-[11px] text-zinc-500">Live forecast + blue rain tiles</div>
+                </div>
+              </div>
+              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
+            </button>
+
+            <button id="btnFeedSubwayStatus" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🚇</span>
+                <div>
+                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">50th St C/E Status</div>
+                  <div class="text-[11px] text-zinc-500">MTA Service alerts (Green/Yellow/Red)</div>
+                </div>
+              </div>
+              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
+            </button>
+
+            <button id="btnFeedSubwayCount" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">⏱️</span>
+                <div>
+                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">50th St C/E Next Trains</div>
+                  <div class="text-[11px] text-zinc-500">Next 2 Uptown & Downtown arrival mins</div>
+                </div>
+              </div>
+              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
+            </button>
+
+            <button id="btnFeedMarkets" class="w-full flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700 text-left transition group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">📈</span>
+                <div>
+                  <div class="text-xs font-semibold text-zinc-200 group-hover:text-amber-400">Market Close (SPX, DOW, NAS)</div>
+                  <div class="text-[11px] text-zinc-500">Major indices with Green/Red indicators</div>
+                </div>
+              </div>
+              <span class="text-xs text-zinc-500 font-mono group-hover:text-zinc-300">Push →</span>
+            </button>
+
+            <div class="p-3 rounded-lg border border-zinc-800 bg-zinc-800/40 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">🏈</span>
+                  <div>
+                    <div class="text-xs font-semibold text-zinc-200">Sports Game Day Feed</div>
+                    <div class="text-[11px] text-zinc-500">ESPN live score or upcoming matchup</div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 pt-1">
+                <select id="sportsTeamSelect" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+                  <option value="BUF">Buffalo Bills</option>
+                  <option value="NYJ">New York Jets</option>
+                  <option value="NYG">New York Giants</option>
+                </select>
+                <button id="btnFeedSports" class="px-3 py-1 bg-zinc-700 hover:bg-amber-500 hover:text-black rounded text-xs font-semibold transition">
+                  Push
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Composer -->
+      <div class="lg:col-span-7 space-y-5">
+        <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span>✍️</span> Ad-Hoc Message Composer
+              </h3>
+              <p class="text-xs text-zinc-400">Type naturally. Characters center automatically on 3 lines.</p>
+            </div>
+            <button id="btnClearComposer" class="text-xs text-zinc-400 hover:text-red-400 transition">
+              Clear
+            </button>
+          </div>
+
+          <div class="space-y-2.5 mb-4">
+            <div>
+              <div class="flex justify-between text-[11px] text-zinc-500 mb-1">
+                <span>ROW 1 (TOP)</span>
+                <span id="row1Counter" class="font-mono">0 / 15</span>
+              </div>
+              <input id="inputRow1" type="text" maxlength="25" placeholder="HELLO WORLD" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-mono uppercase tracking-wider">
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] text-zinc-500 mb-1">
+                <span>ROW 2 (MIDDLE)</span>
+                <span id="row2Counter" class="font-mono">0 / 15</span>
+              </div>
+              <input id="inputRow2" type="text" maxlength="25" placeholder="VESTABOARD NOTE" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-mono uppercase tracking-wider">
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] text-zinc-500 mb-1">
+                <span>ROW 3 (BOTTOM)</span>
+                <span id="row3Counter" class="font-mono">0 / 15</span>
+              </div>
+              <input id="inputRow3" type="text" maxlength="25" placeholder="{67}{67} HAVE A GREAT DAY {67}{67}" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-mono uppercase tracking-wider">
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] text-zinc-400 mb-2 font-medium">INSERT COLOR FLAP AT CURSOR:</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button class="btnColorInsert px-2.5 py-1 rounded bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700/60 text-blue-300 text-xs font-mono transition" data-code="{67}">🟦 Blue {67}</button>
+              <button class="btnColorInsert px-2.5 py-1 rounded bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-700/60 text-emerald-300 text-xs font-mono transition" data-code="{66}">🟩 Green {66}</button>
+              <button class="btnColorInsert px-2.5 py-1 rounded bg-red-900/40 hover:bg-red-800/60 border border-red-700/60 text-red-300 text-xs font-mono transition" data-code="{63}">🟥 Red {63}</button>
+              <button class="btnColorInsert px-2.5 py-1 rounded bg-amber-900/40 hover:bg-amber-800/60 border border-amber-700/60 text-amber-300 text-xs font-mono transition" data-code="{65}">🟨 Yellow {65}</button>
+              <button class="btnColorInsert px-2.5 py-1 rounded bg-rose-950/60 hover:bg-rose-900/80 border border-rose-700/60 text-rose-300 text-xs font-mono transition" data-code="{62}">❤️ Heart {62}</button>
+              <button class="btnColorInsert px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 text-xs font-mono transition" data-code="{69}">⬜ White {69}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Editable Daily Routine & Lineup -->
+    <section class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 sm:p-6 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-800">
+        <div>
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <span>📅</span> Editable Daily Routine & Lineup
+          </h3>
+          <p class="text-xs text-zinc-400">Configure time windows, activate modules, and sync directly to GitHub.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnAddRoutineSlot" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition">
+            + Add Slot
+          </button>
+          <button id="btnSaveRoutine" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition flex items-center gap-1.5">
+            <span>💾</span> Save Routine to GitHub
+          </button>
+          <button id="btnExportConfig" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition">
+            Export config.json
+          </button>
+        </div>
+      </div>
+
+      <div id="routineSlotsList" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span>⚙️</span> API & Cloud Settings
+        </h3>
+        <button id="btnCloseSettings" class="text-zinc-400 hover:text-white text-sm">✕</button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1">Vestaboard Read/Write API Key</label>
+          <input id="settingApiKey" type="password" placeholder="Enter Vestaboard key..." class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+          <p class="text-[11px] text-zinc-500 mt-1">Used for instant 1-second ad-hoc message sends.</p>
+        </div>
+
+        <div class="pt-2 border-t border-zinc-800">
+          <label class="block text-xs font-medium text-amber-400 mb-1">GitHub Personal Access Token (PAT)</label>
+          <input id="settingGithubToken" type="password" placeholder="ghp_... or github_pat_..." class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+          <p class="text-[11px] text-zinc-500 mt-1">Allows the web app to save routines directly to GitHub with one click.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">GitHub Username</label>
+            <input id="settingGithubOwner" type="text" placeholder="username" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Repository Name</label>
+            <input id="settingGithubRepo" type="text" value="vesta-wx" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-800">
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Latitude</label>
+            <input id="settingLat" type="number" step="0.0001" value="40.7128" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Longitude</label>
+            <input id="settingLon" type="number" step="0.0001" value="-74.0060" class="w-full bg-black/60 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 font
