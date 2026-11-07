@@ -85,7 +85,7 @@
     </div>
   </header>
 
-  <!-- Mobile-Optimized Studio Container -->
+  <!-- Studio Container -->
   <main class="max-w-2xl mx-auto px-4 py-4 sm:py-6 flex-1 w-full space-y-6">
 
     <!-- 1. Interactive Studio: Display + Text Input -->
@@ -157,6 +157,21 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <!-- Breck Snow Card -->
+        <div class="p-2.5 rounded-xl border border-white/5 bg-zinc-950/50 hover:border-white/10 transition flex items-center justify-between gap-2 sm:col-span-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">⛷️</span>
+            <div class="truncate">
+              <div class="text-xs font-medium text-white truncate">Breck Snow & Lifts</div>
+              <div class="text-[10px] text-zinc-500 truncate">New Snow + Open Lifts & Trails</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button id="btnPrevBreck" class="px-2 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-[11px] text-zinc-300">Preview</button>
+            <button id="btnSendBreck" class="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-semibold shadow">Send</button>
+          </div>
+        </div>
+
         <div class="p-2.5 rounded-xl border border-white/5 bg-zinc-950/50 hover:border-white/10 transition flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-base">🌦️</span>
@@ -316,7 +331,8 @@
       subway_status: { icon: "🚇", name: "50th St Status" },
       subway_countdown: { icon: "⏱️", name: "50th St Next Trains" },
       markets: { icon: "📈", name: "Market Close" },
-      sports: { icon: "🏈", name: "Sports Game Day" }
+      sports: { icon: "🏈", name: "Sports Game Day" },
+      breck: { icon: "⛷️", name: "Breck Snow & Lifts" }
     };
 
     let routine = [
@@ -446,6 +462,11 @@
       renderGrid(currentLines);
       document.getElementById("displayMode").textContent = "MARKET CLOSE";
     }
+    function loadBreck() {
+      currentLines = ["BRECK  +8\" SNOW", "LIFTS: 24/35 OP", "TRAILS: 142/187"];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "BRECK SKI FEED";
+    }
     function loadSports() {
       const t = document.getElementById("sportsTeam").value;
       if (t === "BUF") currentLines = [" BUFFALO BILLS ", "NEXT: SUN 1:00P", "  vs DOLPHINS  "];
@@ -459,12 +480,14 @@
     document.getElementById("btnPrevSubwayStatus").addEventListener("click", () => { loadSubwayStatus(); setStatus("Loaded subway status preview."); });
     document.getElementById("btnPrevSubwayCount").addEventListener("click", () => { loadSubwayCount(); setStatus("Loaded arrival countdown preview."); });
     document.getElementById("btnPrevMarkets").addEventListener("click", () => { loadMarkets(); setStatus("Loaded market close preview."); });
+    document.getElementById("btnPrevBreck").addEventListener("click", () => { loadBreck(); setStatus("Loaded Breckenridge preview."); });
     document.getElementById("btnPrevSports").addEventListener("click", () => { loadSports(); setStatus("Loaded sports preview."); });
 
     document.getElementById("btnSendWeather").addEventListener("click", () => { loadWeather(); sendToBoard(currentLines); });
     document.getElementById("btnSendSubwayStatus").addEventListener("click", () => { loadSubwayStatus(); sendToBoard(currentLines); });
     document.getElementById("btnSendSubwayCount").addEventListener("click", () => { loadSubwayCount(); sendToBoard(currentLines); });
     document.getElementById("btnSendMarkets").addEventListener("click", () => { loadMarkets(); sendToBoard(currentLines); });
+    document.getElementById("btnSendBreck").addEventListener("click", () => { loadBreck(); sendToBoard(currentLines); });
     document.getElementById("btnSendSports").addEventListener("click", () => { loadSports(); sendToBoard(currentLines); });
 
     function updateComposer() {
@@ -548,7 +571,7 @@
         
         el.className = `p-3.5 rounded-xl border transition space-y-2.5 ${
           isHighlighted 
-            ? 'new-slot-pulse border-amber-500 bg-amber-950/20 shadow-lg shadow-amber-500/10'
+            ? 'new-slot-pulse border-amber-500 bg-amber-950/20 shadow-lg shadow-amber-500/10' 
             : (isOverlapping ? 'border-indigo-500/40 bg-indigo-950/20 shadow-sm' : 'border-white/10 bg-zinc-950/60')
         }`;
 
@@ -588,6 +611,7 @@
               <option value="subway_countdown" ${s.module === 'subway_countdown' ? 'selected' : ''}>⏱️ Next Trains</option>
               <option value="markets" ${s.module === 'markets' ? 'selected' : ''}>📈 Markets</option>
               <option value="sports" ${s.module === 'sports' ? 'selected' : ''}>🏈 Sports</option>
+              <option value="breck" ${s.module === 'breck' ? 'selected' : ''}>⛷️ Breck Snow</option>
             </select>
           </div>
 
