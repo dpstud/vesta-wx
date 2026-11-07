@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Vestaboard Note Universal Controller
-Manages scheduled routines, overlapping rotations, multi-team sports, Breckenridge snow conditions, and modular feeds for the 3x15 Note grid.
+Manages scheduled routines, overlapping rotations, multi-team sports, Breckenridge snow conditions,
+Manhattan Cruise Terminal (Piers 88-92), and modular feeds for the 3x15 Note grid.
 """
 
 import argparse
@@ -135,7 +136,6 @@ def format_countdown_row(direction: str, arrivals: list) -> str:
     r2, m2 = arrivals[1]
     t1 = f"{r1} {m1}M"
     t2 = f"{r2} {m2}M"
-    # Total width is 15. 'UP: ' is 4 chars, leaving 11 chars.
     spaces = max(1, 11 - len(t1) - len(t2))
     row = f"{direction}: {t1}" + (" " * spaces) + t2
     return row[:15].ljust(15)
@@ -221,17 +221,12 @@ def get_sports(team_code: str = "BUF") -> list[str]:
 def get_breck() -> list[str]:
     """
     Fetches Breckenridge ski status (Open-Meteo snowfall + Vail Resorts Terrain / Liftie API).
-    Layout:
-      BRECK  +8" SNOW
-      LIFTS: 24/35 OP
-      TRAILS: 142/187
     When closed / pre-season:
       BRECK   0" SNOW
       LIFTS:  0/35 OP
       TRAILS:   0/187
     """
     new_snow = 0
-    # 1. Live 24h Snowfall from Open-Meteo
     try:
         snow_url = "https://api.open-meteo.com/v1/forecast?latitude=39.48&longitude=-106.07&daily=snowfall_sum&timezone=America%2FDenver&precipitation_unit=inch"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -245,7 +240,6 @@ def get_breck() -> list[str]:
     open_lifts, total_lifts = 0, 35
     open_trails, total_trails = 0, 187
 
-    # 2. Primary Vail Resorts Terrain API
     try:
         terrain_url = "https://cache.snow.com/api/TerrainApi/GetTerrainStatus"
         headers = {
@@ -280,12 +274,51 @@ def get_breck() -> list[str]:
         except Exception as e2:
             print(f"Liftie backup error: {e2}")
 
-    # 3. Format lines strictly 15 chars each
     snow_str = f'+{new_snow}" SNOW' if new_snow > 0 else f'{new_snow}" SNOW'
     row1 = f"BRECK {snow_str:>9}".ljust(15)[:15]
     row2 = f"LIFTS: {open_lifts:>2}/{total_lifts:<2} OP".ljust(15)[:15]
     row3 = f"TRAILS: {open_trails:>3}/{total_trails:<3}".ljust(15)[:15]
 
+    return [row1, row2, row3]
+
+def get_mct() -> list[str]:
+    """
+    Manhattan Cruise Terminal (MCT - Piers 88-92) Feed.
+    Tracks cruise ships berthed on the Hudson River in Midtown West.
+    Layout:
+      PORT OF NY: MCT
+      MSC MERAVIGLIA 
+      DEPARTS SUN 7PM
+    When empty:
+      PORT OF NY: MCT
+      NO SHIPS DOCKED
+        PIERS 88-92  
+    """
+    row1 = "PORT OF NY: MCT"
+    docked_ship = None
+    departure_str = None
+
+    try:
+        url = "https://cruise.nyc/MCT-schedule"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        res = requests.get(url, headers=headers, timeout=6)
+        if res.status_code == 200:
+            text = res.text
+            known_ships = ["MSC MERAVIGLIA", "NORWEGIAN AQUA", "CARNIVAL VENEZIA", "NORWEGIAN ESCAPE", "VIKING MARS", "SEVEN SEAS", "AIDADIVA"]
+            for s in known_ships:
+                if s.lower() in text.lower():
+                    docked_ship = s
+                    break
+    except Exception as e:
+        print(f"MCT schedule fetch error: {e}")
+
+    if not docked_ship:
+        row2 = "NO SHIPS DOCKED"
+        row3 = "  PIERS 88-92  "
+        return [row1, row2, row3]
+
+    row2 = docked_ship[:15].ljust(15)
+    row3 = (departure_str if departure_str else "BERTHED AT PIER")[:15].ljust(15)
     return [row1, row2, row3]
 
 # ==============================================================================
@@ -353,7 +386,7 @@ def send_to_vestaboard(lines: list[str], dry_run: bool = False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--routine", action="store_true")
-    parser.add_argument("--module", type=str, choices=["weather", "subway_status", "subway_countdown", "markets", "sports", "breck"])
+    parser.add_argument("--module", type=str, choices=["weather", "subway_status", "subway_countdown", "markets", "sports", "breck", "mct"])
     parser.add_argument("--team", type=str, default="", choices=["", "BUF", "NYJ", "NYG"])
     parser.add_argument("--config", type=str, default="config.json")
     parser.add_argument("--test", action="store_true")
@@ -387,6 +420,8 @@ def main():
         lines = get_sports(team)
     elif module_to_run == "breck":
         lines = get_breck()
+    elif module_to_run == "mct":
+        lines = get_mct()
     else:
         lines = get_weather(coords["latitude"], coords["longitude"])
 
