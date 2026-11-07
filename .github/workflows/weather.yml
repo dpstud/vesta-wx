@@ -1,16 +1,37 @@
-name: Vestaboard Weather Update
+name: Vestaboard Note Daily Routine
 
 on:
   schedule:
-    # Runs every 30 minutes between 9:00 AM and Midnight Eastern Time
-    # (GitHub Actions uses UTC: 9 AM-11:30 PM ET = 14:00-04:30 UTC, 12 AM ET = 05:00 UTC)
-    - cron: '*/30 14-23 * * *'
-    - cron: '*/30 0-4 * * *'
-    - cron: '0 5 * * *'
-  workflow_dispatch: # Allows manual trigger from the UI
+    # Runs every 5 minutes from 7:00 AM to 11:55 PM Eastern Time
+    # (GitHub Actions uses UTC: 7 AM-11:55 PM ET = 12:00-04:55 UTC)
+    - cron: '*/5 12-23 * * *'
+    - cron: '*/5 0-4 * * *'
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'Specific module to run (or leave empty to obey routine schedule)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'weather'
+          - 'subway_status'
+          - 'subway_countdown'
+          - 'markets'
+          - 'sports'
+      team:
+        description: 'Sports team code'
+        required: false
+        default: 'BUF'
+        type: choice
+        options:
+          - 'BUF'
+          - 'NYJ'
+          - 'NYG'
 
 jobs:
-  update-board:
+  run-routine:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
@@ -24,7 +45,12 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run weather script
+      - name: Run controller
         env:
           VESTABOARD_READ_WRITE_KEY: ${{ secrets.VESTABOARD_READ_WRITE_KEY }}
-        run: python vestaboard_weather.py
+        run: |
+          if [ -n "${{ github.event.inputs.module }}" ]; then
+            python vestaboard_controller.py --module ${{ github.event.inputs.module }} --team ${{ github.event.inputs.team }}
+          else
+            python vestaboard_controller.py --routine
+          fi
