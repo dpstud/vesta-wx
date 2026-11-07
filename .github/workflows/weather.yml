@@ -2,8 +2,8 @@ name: Vestaboard Note Daily Routine
 
 on:
   schedule:
-    # Runs every 15 minutes around the clock (GitHub's most reliable cadence)
-    - cron: '*/15 * * * *'
+    # Runs every 15 minutes at off-peak minutes (:07, :22, :37, :52)
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
       module:
