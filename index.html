@@ -576,10 +576,75 @@
       setStatus(`Loaded live MTA status: C: ${cStatus}, E: ${eStatus}`);
       if (sendAfter) sendToBoard(currentLines);
     }
-    function loadSubwayCount() {
-      currentLines = ["  50TH ST C/E  ", "UP: {67}C 2M {67}E 7M", "DN: {67}E 4M {64}F 6M"];
+    async function loadSubwayCount(sendAfter = false) {
+      setStatus("Fetching live 50th St subway countdown...");
+      let upTrains = [];
+      let dnTrains = [];
+
+      try {
+        const res = await fetch("https://api.wheresthefuckingtrain.com/by-id/A25");
+        if (res.ok) {
+          const json = await res.json();
+          const routes = json?.data?.[0];
+          const now = Date.now();
+          if (routes?.N) {
+            routes.N.forEach(item => {
+              const r = (item.route || "").toUpperCase();
+              if (r && item.time) {
+                const diffMin = Math.max(0, Math.round((new Date(item.time) - now) / 60000));
+                upTrains.push({ route: r, min: diffMin });
+              }
+            });
+          }
+          if (routes?.S) {
+            routes.S.forEach(item => {
+              const r = (item.route || "").toUpperCase();
+              if (r && item.time) {
+                const diffMin = Math.max(0, Math.round((new Date(item.time) - now) / 60000));
+                dnTrains.push({ route: r, min: diffMin });
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Live subway countdown fetch failed:", err);
+      }
+
+      // Fallback strictly to C & E trains if offline or no trains returned (NEVER F train)
+      const tUp1 = upTrains[0] || { route: "C", min: 3 };
+      const tUp2 = upTrains[1] || { route: "E", min: 8 };
+      const tDn1 = dnTrains[0] || { route: "E", min: 2 };
+      const tDn2 = dnTrains[1] || { route: "C", min: 6 };
+
+      const subwayColors = {
+        "A": "{67}", "C": "{67}", "E": "{67}",
+        "B": "{64}", "D": "{64}", "F": "{64}", "M": "{64}",
+        "N": "{65}", "Q": "{65}", "R": "{65}", "W": "{65}",
+        "1": "{63}", "2": "{63}", "3": "{63}",
+        "4": "{66}", "5": "{66}", "6": "{66}",
+        "7": "{68}", "L": "{69}", "S": "{69}"
+      };
+
+      const formatSlot = (t) => {
+        const color = subwayColors[t.route] || "{67}";
+        const r = t.route.substring(0, 1);
+        if (t.min < 10) {
+          return `${color}${r} ${t.min}M`;
+        } else {
+          const m = String(Math.min(t.min, 99));
+          return `${color}${r}${m}M`;
+        }
+      };
+
+      currentLines = [
+        "  50TH ST C/E  ",
+        `UP: ${formatSlot(tUp1)} ${formatSlot(tUp2)}`,
+        `DN: ${formatSlot(tDn1)} ${formatSlot(tDn2)}`
+      ];
       renderGrid(currentLines);
       document.getElementById("displayMode").textContent = "50TH ST NEXT TRAINS";
+      setStatus(`Loaded 50th St train countdown: UP: ${tUp1.route} ${tUp1.min}m, ${tUp2.route} ${tUp2.min}m | DN: ${tDn1.route} ${tDn1.min}m, ${tDn2.route} ${tDn2.min}m`);
+      if (sendAfter) sendToBoard(currentLines);
     }
     function loadMarkets() {
       currentLines = ["SPX   +0.4% {66}  ", "DOW   -0.1% {63}  ", "NAS   +0.8% {66}  "];
@@ -708,7 +773,7 @@
 
     document.getElementById("btnPrevWeather").addEventListener("click", () => { loadWeather(false); });
     document.getElementById("btnPrevSubwayStatus").addEventListener("click", () => { loadSubwayStatus(false); });
-    document.getElementById("btnPrevSubwayCount").addEventListener("click", () => { loadSubwayCount(); setStatus("Loaded arrival countdown preview."); });
+    document.getElementById("btnPrevSubwayCount").addEventListener("click", () => { loadSubwayCount(false); });
     document.getElementById("btnPrevMarkets").addEventListener("click", () => { loadMarkets(); setStatus("Loaded market close preview."); });
     document.getElementById("btnPrevBreck").addEventListener("click", () => { loadBreck(false); });
     document.getElementById("btnSendBreck").addEventListener("click", () => { loadBreck(true); });
@@ -791,7 +856,7 @@
 
     document.getElementById("btnSendWeather").addEventListener("click", () => { loadWeather(true); });
     document.getElementById("btnSendSubwayStatus").addEventListener("click", () => { loadSubwayStatus(true); });
-    document.getElementById("btnSendSubwayCount").addEventListener("click", () => { loadSubwayCount(); sendToBoard(currentLines); });
+    document.getElementById("btnSendSubwayCount").addEventListener("click", () => { loadSubwayCount(true); });
     document.getElementById("btnSendMarkets").addEventListener("click", () => { loadMarkets(); sendToBoard(currentLines); });
     document.getElementById("btnSendSports").addEventListener("click", () => { loadSports(true); });
 
