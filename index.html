@@ -245,6 +245,21 @@
           </div>
         </div>
 
+        <!-- Air Quality & UV Card -->
+        <div class="p-2.5 rounded-xl border border-white/5 bg-zinc-950/50 hover:border-white/10 transition flex items-center justify-between gap-2 sm:col-span-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">🍃</span>
+            <div class="truncate">
+              <div class="text-xs font-medium text-white truncate">Air Quality & UV Barometer</div>
+              <div class="text-[10px] text-zinc-500 truncate">US AQI, PM2.5 & Max UV Index</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button id="btnPrevAQI" class="px-2 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-[11px] text-zinc-300">Preview</button>
+            <button id="btnSendAQI" class="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-semibold shadow">Send</button>
+          </div>
+        </div>
+
         <div class="sm:col-span-2 p-2.5 rounded-xl border border-white/5 bg-zinc-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <span class="text-base">🏈</span>
@@ -350,7 +365,8 @@
       markets: { icon: "📈", name: "Market Close" },
       sports: { icon: "🏈", name: "Sports Game Day" },
       breck: { icon: "⛷️", name: "Breck Snow & Lifts" },
-      mct: { icon: "🚢", name: "Manhattan Cruise Port" }
+      mct: { icon: "🚢", name: "Manhattan Cruise Port" },
+      air_quality: { icon: "🍃", name: "Air Quality & UV" }
     };
 
     let routine = [
@@ -708,6 +724,69 @@
     document.getElementById("btnPrevMCT").addEventListener("click", () => { loadMCT(false); });
     document.getElementById("btnSendMCT").addEventListener("click", () => { loadMCT(true); });
 
+    async function loadAirQuality(sendAfter = false) {
+      setStatus("Fetching live Air Quality & UV...");
+      const lat = parseFloat(localStorage.getItem("VESTA_LAT") || "40.7128");
+      const lon = parseFloat(localStorage.getItem("VESTA_LON") || "-74.0060");
+      let aqi = 30, pm25 = 6.5, uvMax = 3.0;
+
+      try {
+        const aqRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5&timezone=auto`);
+        if (aqRes.ok) {
+          const d = (await aqRes.json()).current || {};
+          if (d.us_aqi !== undefined) aqi = Math.round(d.us_aqi);
+          if (d.pm2_5 !== undefined) pm25 = Number(d.pm2_5);
+        }
+      } catch (e) {
+        console.warn("AQI fetch failed:", e);
+      }
+
+      try {
+        const uvRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=uv_index_max&timezone=auto`);
+        if (uvRes.ok) {
+          const uvList = (await uvRes.json()).daily?.uv_index_max || [];
+          if (uvList[0] !== undefined) uvMax = Number(uvList[0]);
+        }
+      } catch (e) {
+        console.warn("UV fetch failed:", e);
+      }
+
+      // True Vestaboard colors: Green {66}, Yellow {65}, Orange {64}, Red {63}
+      let cAqi = "{66}", sAqi = "GOOD";
+      if (aqi > 150) { cAqi = "{63}"; sAqi = "UNHL"; }
+      else if (aqi > 100) { cAqi = "{64}"; sAqi = "SENS"; }
+      else if (aqi > 50) { cAqi = "{65}"; sAqi = "MOD "; }
+
+      let cUv = "{66}", sUv = "LOW ";
+      const uvR = Math.round(uvMax);
+      if (uvR > 7) { cUv = "{63}"; sUv = "V.HI"; }
+      else if (uvR > 5) { cUv = "{64}"; sUv = "HIGH"; }
+      else if (uvR > 2) { cUv = "{65}"; sUv = "MOD "; }
+
+      const aqiStr = `AQI ${aqi}`;
+      const row1 = `${cAqi} ${aqiStr.padEnd(7)} ${sAqi}`.slice(0, 18);
+      
+      const pmStr = pm25.toFixed(1);
+      let row2 = `PM2.5 ${pmStr} UG/M3`;
+      if (row2.length < 15) {
+        row2 = `PM2.5` + " ".repeat(16 - row2.length) + `${pmStr} UG/M3`;
+      }
+      row2 = row2.slice(0, 15).padEnd(15);
+
+      const uvStr = `UV MAX ${uvR}`;
+      const row3 = `${cUv} ${uvStr.padEnd(8)} ${sUv}`.slice(0, 18);
+
+      currentLines = [row1, row2, row3];
+      renderGrid(currentLines);
+      document.getElementById("displayMode").textContent = "AIR QUALITY & UV";
+      setStatus(`Loaded live AQI: ${aqi} (${sAqi}), UV: ${uvR} (${sUv}).`);
+
+      if (sendAfter) sendToBoard(currentLines);
+    }
+
+    document.getElementById("btnPrevAQI").addEventListener("click", () => { loadAirQuality(false); });
+    document.getElementById("btnSendAQI").addEventListener("click", () => { loadAirQuality(true); });
+
     document.getElementById("btnPrevSports").addEventListener("click", () => { loadSports(false); });
 
     document.getElementById("btnSendWeather").addEventListener("click", () => { loadWeather(true); });
@@ -839,6 +918,7 @@
               <option value="sports" ${s.module === 'sports' ? 'selected' : ''}>🏈 Sports</option>
               <option value="breck" ${s.module === 'breck' ? 'selected' : ''}>⛷️ Breck Snow</option>
               <option value="mct" ${s.module === 'mct' ? 'selected' : ''}>🚢 Cruise Port</option>
+              <option value="air_quality" ${s.module === 'air_quality' ? 'selected' : ''}>🍃 Air Quality & UV</option>
             </select>
           </div>
 
