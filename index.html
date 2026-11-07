@@ -779,12 +779,55 @@
       };
     }
 
+    async function loadCloudConfig() {
+      const badge = document.getElementById("syncBadge");
+      const owner = localStorage.getItem("GH_OWNER") || "dpstud";
+      const repo = localStorage.getItem("GH_REPO") || "vesta-wx";
+      const token = localStorage.getItem("GH_TOKEN");
+
+      try {
+        let configData = null;
+
+        // 1. Direct GitHub API fetch (instant multi-device sync)
+        if (owner && repo) {
+          const headers = { "Accept": "application/vnd.github.v3+json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const apiRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/config.json?_t=${Date.now()}`, { headers });
+          if (apiRes.ok) {
+            const fileInfo = await apiRes.json();
+            if (fileInfo.content) {
+              const decoded = decodeURIComponent(escape(atob(fileInfo.content.replace(/\n/g, ""))));
+              configData = JSON.parse(decoded);
+            }
+          }
+        }
+
+        // 2. Fallback to raw GitHub Pages host
+        if (!configData) {
+          const pageRes = await fetch(`config.json?_t=${Date.now()}`);
+          if (pageRes.ok) {
+            configData = await pageRes.json();
+          }
+        }
+
+        // 3. Update routine & re-render if valid routine exists in cloud
+        if (configData && Array.isArray(configData.routine) && configData.routine.length > 0) {
+          routine = configData.routine;
+          try { localStorage.setItem("VESTA_ROUTINE", JSON.stringify(routine)); } catch (e) {}
+          renderRoutine();
+          if (badge) badge.textContent = "Cloud synced ✓";
+        }
+      } catch (err) {
+        console.warn("Could not load cloud config:", err);
+      }
+    }
+
     async function autoSaveRoutine() {
       const badge = document.getElementById("syncBadge");
       if (badge) badge.textContent = "Saving...";
       try { localStorage.setItem("VESTA_ROUTINE", JSON.stringify(routine)); } catch (e) {}
       
-      const token = localStorage.getItem("GH_TOKEN"), owner = localStorage.getItem("GH_OWNER"), repo = localStorage.getItem("GH_REPO") || "vesta-wx";
+      const token = localStorage.getItem("GH_TOKEN"), owner = localStorage.getItem("GH_OWNER") || "dpstud", repo = localStorage.getItem("GH_REPO") || "vesta-wx";
       if (!token || !owner) {
         if (badge) badge.textContent = "Auto-saved ✓";
         return;
@@ -848,6 +891,7 @@
       initGrid();
       renderGrid(currentLines);
       renderRoutine();
+      loadCloudConfig();
     });
   </script>
 </body>
