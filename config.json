@@ -65,7 +65,7 @@
       "module": "markets",
       "start_time": "16:15",
       "end_time": "17:30",
-      "enabled": true,
+      "enabled": false,
       "name": "Market Close"
     },
     {
