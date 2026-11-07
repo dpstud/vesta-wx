@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Vestaboard Note Universal Controller 
-Manages scheduled routines, overlapping rotations, multi-team sports, Breckenridge snow conditions,
-Manhattan Cruise Terminal (Piers 88-92), Air Quality & UV, and modular feeds for the 3x15 Note grid.
+Vestaboard Note Universal Controller
+Manages scheduled routines, overlapping rotations, multi-team sports, Breckenridge snow conditions, and modular feeds for the 3x15 Note grid.
 """
 
 import argparse
@@ -165,10 +164,73 @@ def format_countdown_row(direction: str, t1: tuple = None, t2: tuple = None) -> 
     s2 = format_train_slot(*t2) if t2 else "     "
     return f"{direction}: {s1} {s2}"
 
+def parse_minutes_away(time_val) -> int:
+    """Parses an ISO timestamp or epoch timestamp into minutes from now."""
+    try:
+        if isinstance(time_val, (int, float)):
+            target_ts = float(time_val)
+            now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
+            diff_sec = target_ts - now_ts
+        else:
+            time_str = str(time_val).strip()
+            if time_str.isdigit():
+                target_ts = float(time_str)
+                now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
+                diff_sec = target_ts - now_ts
+            else:
+                t_clean = time_str.replace("Z", "+00:00")
+                target_dt = datetime.datetime.fromisoformat(t_clean)
+                if target_dt.tzinfo is None:
+                    target_dt = target_dt.replace(tzinfo=datetime.timezone.utc)
+                now_dt = datetime.datetime.now(datetime.timezone.utc)
+                diff_sec = (target_dt - now_dt).total_seconds()
+        return max(0, round(diff_sec / 60.0))
+    except Exception:
+        return 0
+
 def get_subway_countdown() -> list[str]:
+    """
+    50th St C/E Next Trains Countdown Feed.
+    Fetches live GTFS arrivals via MTA API proxy (api.wheresthefuckingtrain.com/by-id/A25).
+    Row 1: Centered station name (2 leading spaces: "  50TH ST C/E  ")
+    Row 2: UP: [Color][Route] [Min]M [Color][Route] [Min]M
+    Row 3: DN: [Color][Route] [Min]M [Color][Route] [Min]M
+    """
     row1 = "  50TH ST C/E  "
-    row2 = format_countdown_row("UP", ("C", 2), ("E", 7))
-    row3 = format_countdown_row("DN", ("E", 4), ("F", 6))
+    
+    up_trains = []
+    dn_trains = []
+
+    try:
+        url = "https://api.wheresthefuckingtrain.com/by-id/A25"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        res = requests.get(url, headers=headers, timeout=6).json()
+        data = res.get("data", [])
+        if data and len(data) > 0:
+            routes = data[0]
+            # Northbound (Uptown) - auto-handles normal lines and reroutes (F, D, etc.)
+            for item in routes.get("N", []):
+                r = str(item.get("route", "")).upper()
+                if r:
+                    m = parse_minutes_away(item.get("time"))
+                    up_trains.append((r, m))
+            # Southbound (Downtown) - auto-handles normal lines and reroutes (F, D, etc.)
+            for item in routes.get("S", []):
+                r = str(item.get("route", "")).upper()
+                if r:
+                    m = parse_minutes_away(item.get("time"))
+                    dn_trains.append((r, m))
+    except Exception as e:
+        print(f"Subway countdown fetch error: {e}")
+
+    # Fallback strictly to C & E trains if offline or no trains returned (NEVER F train)
+    t_up1 = up_trains[0] if len(up_trains) > 0 else ("C", 3)
+    t_up2 = up_trains[1] if len(up_trains) > 1 else ("E", 8)
+    t_dn1 = dn_trains[0] if len(dn_trains) > 0 else ("E", 2)
+    t_dn2 = dn_trains[1] if len(dn_trains) > 1 else ("C", 6)
+
+    row2 = format_countdown_row("UP", t_up1, t_up2)
+    row3 = format_countdown_row("DN", t_dn1, t_dn2)
     return [row1, row2, row3]
 
 def get_markets() -> list[str]:
@@ -189,7 +251,7 @@ def get_markets() -> list[str]:
 
         sign = "+" if pct > 0 else ("-" if pct < 0 else " ")
         icon = "{66}" if pct > 0 else ("{63}" if pct < 0 else "{69}")
-        results.append(f"{label:<4} {sign}{abs(pct):.1f}% {icon}  ")
+        results.append(f"{label:<4}  {sign}{abs(pct):.1f}% {icon}  ")
     return results
 
 def get_sports(team_code: str = "BUF") -> list[str]:
@@ -234,7 +296,7 @@ def get_sports(team_code: str = "BUF") -> list[str]:
     return [
         pad_flaps_center(t_name[:15], 15),
         pad_flaps_center("NEXT GAME", 15),
-        pad_flaps_center("SCHEDULE PENDING", 15),
+        pad_flaps_center("SCHED PENDING", 15),
     ]
 
 def get_breck() -> list[str]:
@@ -250,6 +312,7 @@ def get_breck() -> list[str]:
       TRAILS:   0/187
     """
     new_snow = 0
+    # 1. Live 24h Snowfall from Open-Meteo
     try:
         snow_url = "https://api.open-meteo.com/v1/forecast?latitude=39.48&longitude=-106.07&daily=snowfall_sum&timezone=America%2FDenver&precipitation_unit=inch"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -263,6 +326,7 @@ def get_breck() -> list[str]:
     open_lifts, total_lifts = 0, 35
     open_trails, total_trails = 0, 187
 
+    # 2. Primary Vail Resorts Terrain API
     try:
         terrain_url = "https://cache.snow.com/api/TerrainApi/GetTerrainStatus"
         headers = {
@@ -297,6 +361,7 @@ def get_breck() -> list[str]:
         except Exception as e2:
             print(f"Liftie backup error: {e2}")
 
+    # 3. Format lines strictly 15 chars each
     snow_str = f'+{new_snow}" SNOW' if new_snow > 0 else f'{new_snow}" SNOW'
     row1 = f"BRECK {snow_str:>9}".ljust(15)[:15]
     row2 = f"LIFTS: {open_lifts:>2}/{total_lifts:<2} OP".ljust(15)[:15]
@@ -326,6 +391,7 @@ def get_mct() -> list[str]:
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
 
+    # 1. Primary: Scrape CruiseMapper Port 98 (NYC Manhattan-Brooklyn)
     try:
         cm_url = "https://www.cruisemapper.com/ports/new-york-port-98"
         res = requests.get(cm_url, headers=headers, timeout=8)
@@ -348,6 +414,7 @@ def get_mct() -> list[str]:
     except Exception as e:
         print(f"CruiseMapper scrape error: {e}")
 
+    # 2. Secondary fallback: CruiseTimeTables
     if not docked_ship:
         try:
             ct_url = "https://www.cruisetimetables.com/new-york-city-new-york-cruise-ship-schedule.html"
