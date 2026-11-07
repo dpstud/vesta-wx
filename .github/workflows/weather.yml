@@ -2,10 +2,8 @@ name: Vestaboard Note Daily Routine
 
 on:
   schedule:
-    # Runs every 5 minutes from 7:00 AM to 11:55 PM Eastern Time
-    # (GitHub Actions uses UTC: 7 AM-11:55 PM ET = 12:00-04:55 UTC)
-    - cron: '*/5 12-23 * * *'
-    - cron: '*/5 0-4 * * *'
+    # Runs every 15 minutes around the clock (GitHub's most reliable cadence)
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       module:
