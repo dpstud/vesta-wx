@@ -71,6 +71,14 @@
       "end_time": "22:00",
       "enabled": false,
       "name": "Sports Game Day"
+    },
+    {
+      "id": "1794083863502",
+      "module": "weather",
+      "start_time": "22:00",
+      "end_time": "23:00",
+      "enabled": true,
+      "name": "Weather & Rain"
     }
   ]
 }
