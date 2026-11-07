@@ -2,71 +2,34 @@ import datetime
 import os
 import requests
 
-# ==============================================================================
-# CONFIGURATION
-# ==============================================================================
-
-# Set your city's latitude and longitude
 LATITUDE = 40.7128
 LONGITUDE = -74.0060
-
-# Choose your layout (1, 2, 3, or 4):
-#
-#   OPTION 1: The Classic Glance
-#     +---------------+
-#     | PARTLY CLOUDY |
-#     |    NOW  68    |
-#     |  H 74   L 52  |
-#     +---------------+
-#
-#   OPTION 2: Numbers First
-#     +---------------+
-#     |      68       |
-#     |  H:74   L:52  |
-#     | PARTLY CLOUDY |
-#     +---------------+
-#
-#   OPTION 3: With Live Timestamp
-#     +---------------+
-#     | PARTLY CLOUDY |
-#     | 68  H:74 L:52 |
-#     |   10:30 PM    |
-#     +---------------+
-#
-#   OPTION 4: With Rain Chance (Default)
-#     +---------------+
-#     | PARTLY CLOUDY |
-#     | 68  H:74 L:52 |
-#     |   RAIN: 20%   |
-#     +---------------+
-#
 LAYOUT_STYLE = 4
-
-# ==============================================================================
 
 VESTABOARD_API_KEY = os.environ.get("VESTABOARD_READ_WRITE_KEY")
 
-# Shortened names guaranteed to fit the Note's 15-character width
+# All condition names are tuned to odd lengths (7, 9, 11, 13)
+# so they divide symmetrically across the Note's 15 columns
 WEATHER_CODES = {
-    0: "CLEAR SKY",
-    1: "MAINLY CLEAR",
-    2: "PARTLY CLOUDY",
-    3: "OVERCAST",
-    45: "FOGGY",
-    48: "FOG",
-    51: "LIGHT DRIZZLE",
-    53: "DRIZZLE",
-    55: "HEAVY DRIZZLE",
-    61: "LIGHT RAIN",
-    63: "RAIN",
-    65: "HEAVY RAIN",
-    71: "LIGHT SNOW",
-    73: "SNOW",
-    75: "HEAVY SNOW",
-    80: "SHOWERS",
-    81: "HEAVY SHOWERS",
-    82: "STORM SHOWERS",
-    95: "THUNDERSTORM",
+    0: "CLEAR SKY",  # 9 chars -> 3 spaces each side
+    1: "SUNNY SKIES",  # 11 chars -> 2 spaces each side
+    2: "PARTLY CLOUDY",  # 13 chars -> 1 space each side
+    3: "FULL OVERCAST",  # 13 chars -> 1 space each side (or "VERY CLOUDY")
+    45: "FOGGY",  # 5 chars -> 5 spaces each side
+    48: "DENSE FOG",  # 9 chars -> 3 spaces each side
+    51: "LIGHT DRIZZLE",  # 13 chars -> 1 space each side
+    53: "DRIZZLE",  # 7 chars -> 4 spaces each side
+    55: "HEAVY DRIZZLE",  # 13 chars -> 1 space each side
+    61: "SLIGHT RAIN",  # 11 chars -> 2 spaces each side
+    63: "STEADY RAIN",  # 11 chars -> 2 spaces each side
+    65: "SEVERE RAIN",  # 11 chars -> 2 spaces each side
+    71: "SLIGHT SNOW",  # 11 chars -> 2 spaces each side
+    73: "STEADY SNOW",  # 11 chars -> 2 spaces each side
+    75: "SNOWSTORM",  # 9 chars -> 3 spaces each side
+    80: "SHOWERS",  # 7 chars -> 4 spaces each side
+    81: "HEAVY SHOWERS",  # 13 chars -> 1 space each side
+    82: "STORM SHOWERS",  # 13 chars -> 1 space each side
+    95: "THUNDERSTORMS",  # 13 chars -> 1 space each side
 }
 
 
@@ -94,22 +57,22 @@ def get_weather():
 def format_display(weather, style):
     now_str = datetime.datetime.now().strftime("%I:%M %p").lstrip("0")
 
+    # Pads single-digit rain percentages so line is always 9 chars
+    rain_str = f"RAIN: {weather['rain']:>2}%"
+
     if style == 1:
-        # The Classic Glance
         return [
             weather["condition"].center(15),
             f"NOW  {weather['temp']}".center(15),
             f"H {weather['high']}   L {weather['low']}".center(15),
         ]
     elif style == 2:
-        # Numbers First
         return [
             f"{weather['temp']}".center(15),
             f"H:{weather['high']}   L:{weather['low']}".center(15),
             weather["condition"].center(15),
         ]
     elif style == 3:
-        # With Timestamp
         return [
             weather["condition"].center(15),
             f"{weather['temp']}  H:{weather['high']} L:{weather['low']}".center(
@@ -118,13 +81,13 @@ def format_display(weather, style):
             now_str.center(15),
         ]
     else:
-        # Option 4 (Default): With Rain Chance
+        # Option 4 (Default)
         return [
             weather["condition"].center(15),
             f"{weather['temp']}  H:{weather['high']} L:{weather['low']}".center(
                 15
             ),
-            f"RAIN: {weather['rain']}%".center(15),
+            rain_str.center(15),
         ]
 
 
@@ -138,9 +101,7 @@ def send_to_vestaboard(weather):
         json={"text": message},
         timeout=10,
     )
-    print(
-        f"Posted Option {LAYOUT_STYLE} to Note. Vestaboard status: {res.status_code}"
-    )
+    print(f"Posted status: {res.status_code}")
 
 
 if __name__ == "__main__":
