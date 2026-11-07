@@ -1,0 +1,30 @@
+name: Vestaboard Weather Update
+
+on:
+  schedule:
+    # Runs every 30 minutes between 9:00 AM and Midnight Eastern Time
+    # (GitHub Actions uses UTC: 9 AM-11:30 PM ET = 14:00-04:30 UTC, 12 AM ET = 05:00 UTC)
+    - cron: '*/30 14-23 * * *'
+    - cron: '*/30 0-4 * * *'
+    - cron: '0 5 * * *'
+  workflow_dispatch: # Allows manual trigger from the UI
+
+jobs:
+  update-board:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run weather script
+        env:
+          VESTABOARD_READ_WRITE_KEY: ${{ secrets.VESTABOARD_READ_WRITE_KEY }}
+        run: python vestaboard_weather.py
