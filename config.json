@@ -56,7 +56,7 @@
       "id": "4",
       "module": "weather",
       "start_time": "09:30",
-      "end_time": "16:15",
+      "end_time": "23:15",
       "enabled": true,
       "name": "Weather & Rain"
     },
