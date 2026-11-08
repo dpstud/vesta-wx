@@ -79,7 +79,7 @@
       "module": "mct",
       "start_time": "09:00",
       "end_time": "23:59",
-      "enabled": true,
+      "enabled": false,
       "name": "Manhattan Cruise Port"
     }
   ]
