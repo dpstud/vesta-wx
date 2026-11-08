@@ -57,7 +57,7 @@
       "id": "evening_sports",
       "name": "Sports Game Day",
       "module": "sports",
-      "start_time": "18:00",
+      "start_time": "13:00",
       "end_time": "22:00",
       "enabled": true,
       "teams": [
