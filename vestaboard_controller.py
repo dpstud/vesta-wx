@@ -541,7 +541,8 @@ def resolve_active_module(config: dict) -> tuple[str, str]:
         print(f"[{current_hm} {tz_name}] Outside active routine hours (Quiet Mode).")
         return None, None
 
-    bucket = (now.hour * 60 + now.minute) // 5
+    # Each 10-minute cron execution increments the step index by 1
+    bucket = (now.hour * 60 + now.minute) // 10
     chosen_slot = active_slots[bucket % len(active_slots)]
     module = chosen_slot.get("module")
     
