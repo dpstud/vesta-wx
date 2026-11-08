@@ -26,61 +26,73 @@
     ]
   },
   "sports": {
-    "active_team": "BUF"
+    "active_team": "BUF",
+    "teams": [
+      {
+        "id": "2",
+        "code": "BUF",
+        "name": "Buffalo Bills"
+      },
+      {
+        "id": "20",
+        "code": "NYJ",
+        "name": "New York Jets"
+      },
+      {
+        "id": "19",
+        "code": "NYG",
+        "name": "New York Giants"
+      }
+    ]
   },
   "routine": [
     {
+      "id": "morning_weather",
+      "name": "Morning Weather & Rain Forecast",
+      "module": "weather",
+      "start_time": "07:00",
+      "end_time": "08:30",
+      "enabled": true
+    },
+    {
       "id": "commute_subway_countdown",
-      "name": "50th St Next Trains",
+      "name": "50th St C/E Next Trains",
       "module": "subway_countdown",
       "start_time": "08:30",
       "end_time": "09:30",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "daytime_weather",
-      "name": "Weather & Rain",
+      "name": "Hourly Live Weather",
       "module": "weather",
       "start_time": "09:30",
-      "end_time": "23:15",
+      "end_time": "16:15",
       "enabled": true
     },
     {
       "id": "market_close",
-      "name": "Market Close",
+      "name": "Market Close (S&P, Dow, NASDAQ)",
       "module": "markets",
       "start_time": "16:15",
       "end_time": "17:30",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "evening_sports",
-      "name": "Sports Game Day",
+      "name": "Sports Mode (Bills / Jets / Giants)",
       "module": "sports",
-      "start_time": "10:01",
+      "start_time": "18:00",
       "end_time": "22:00",
-      "enabled": true,
-      "teams": [
-        "BUF",
-        "NYJ",
-        "NYG"
-      ]
+      "enabled": true
     },
     {
       "id": "night_subway_status",
-      "name": "50th St Status",
+      "name": "50th St C/E Service Status",
       "module": "subway_status",
       "start_time": "22:00",
       "end_time": "23:59",
       "enabled": false
-    },
-    {
-      "id": "1794158658337",
-      "module": "mct",
-      "start_time": "09:00",
-      "end_time": "23:59",
-      "enabled": false,
-      "name": "Manhattan Cruise Port"
     }
   ]
 }
