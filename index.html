@@ -302,7 +302,7 @@
             <span>📅</span> Daily Lineup & Routine
             <span id="routinePauseBadge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold font-flap">PAUSED</span>
           </h2>
-          <p class="text-xs text-zinc-400">Overlapping windows alternate evenly every 5 minutes.</p>
+          <p class="text-xs text-zinc-400">Overlapping windows will evenly rotate with each change.</p>
         </div>
         <div class="flex items-center gap-2.5">
           <span id="syncBadge" class="text-[11px] text-zinc-500 font-flap transition">Auto-saved</span>
@@ -313,7 +313,7 @@
       <!-- Rotation Notice -->
       <div id="rotationNotice" class="hidden p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/30 text-indigo-300 text-xs flex items-center gap-2 font-medium">
         <span class="text-base text-indigo-400">⇄</span>
-        <span>Overlapping slots detected: the system will rotate between them evenly every 5 minutes.</span>
+        <span>Overlapping slots detected: the system will evenly rotate with each change.</span>
       </div>
 
       <div id="routineList" class="space-y-2.5"></div>
@@ -1045,7 +1045,7 @@
           <!-- Row 3: Multi-Team Sports Selector -->
           ${isSports ? `
           <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5 text-[11px]">
-            <span class="text-zinc-400 font-medium">TEAMS (ROTATES EVERY 5M):</span>
+            <span class="text-zinc-400 font-medium">TEAMS (ROTATES WITH EACH CHANGE):</span>
             <div class="flex items-center gap-1.5">
               ${['BUF', 'NYJ', 'NYG'].map(tm => {
                 const active = selectedTeams.includes(tm);
