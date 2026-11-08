@@ -1,5 +1,5 @@
 {
-  "paused": false,
+  "paused": true,
   "timezone": "America/New_York",
   "coordinates": {
     "latitude": 40.7128,
