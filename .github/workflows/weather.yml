@@ -2,8 +2,10 @@ name: Vestaboard Note Daily Routine
 
 on:
   schedule:
-    # Runs every 15 minutes at off-peak minutes (:07, :22, :37, :52)
-    - cron: '7,22,37,52 * * * *'
+    # Runs every 10 minutes between 7:00 AM and Midnight Eastern Time
+    - cron: '*/10 12-23 * * *'
+    - cron: '*/10 0-4 * * *'
+    - cron: '0 5 * * *'
   workflow_dispatch:
     inputs:
       module:
@@ -18,8 +20,11 @@ on:
           - 'subway_countdown'
           - 'markets'
           - 'sports'
+          - 'breck'
+          - 'mct'
+          - 'air_quality'
       team:
-        description: 'Sports team code'
+        description: 'Sports team code (if running sports module)'
         required: false
         default: 'BUF'
         type: choice
