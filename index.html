@@ -537,11 +537,7 @@
     const PRECIP_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99];
 
     function padFlaps(text, width = 15) {
-      const len = text.length;
-      if (len >= width) return text.slice(0, width);
-      const left = Math.floor((width - len) / 2);
-      const right = width - len - left;
-      return " ".repeat(left) + text + " ".repeat(right);
+      return text.trim();
     }
 
     async function loadWeather(sendAfter = false) {
@@ -565,7 +561,7 @@
           const isPrecip = PRECIP_CODES.includes(code);
 
           const rainText = rain >= 100 ? "RAIN:100%" : `RAIN: ${String(rain).padStart(2)}%`;
-          const bottomRow = isPrecip ? `{67}{67} ${rainText} {67}{67}` : padFlaps(rainText, 15);
+          const bottomRow = isPrecip ? `{67}{67} ${rainText} {67}{67}` : rainText;
 
           currentLines = [
             padFlaps(condition, 15),
@@ -688,7 +684,7 @@
       };
 
       currentLines = [
-        "  50TH ST C/E  ",
+        "50TH ST C/E",
         `UP: ${formatSlot(tUp1)} ${formatSlot(tUp2)}`,
         `DN: ${formatSlot(tDn1)} ${formatSlot(tDn2)}`
       ];
