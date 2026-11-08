@@ -524,6 +524,11 @@ def resolve_active_module(config: dict) -> tuple[str, str]:
     now = datetime.datetime.now(ZoneInfo(tz_name)) if ZoneInfo else datetime.datetime.now()
     current_hm = now.strftime("%H:%M")
 
+    # Away Mode / Automation Pause Check
+    if config.get("paused", False):
+        print(f"[{current_hm} {tz_name}] Automation paused (Away Mode active). Exiting quietly.")
+        return None, None
+
     active_slots = []
     for slot in config.get("routine", []):
         if not slot.get("enabled", True):
