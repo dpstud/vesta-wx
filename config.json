@@ -30,14 +30,6 @@
   },
   "routine": [
     {
-      "id": "morning_weather",
-      "name": "Weather & Rain",
-      "module": "weather",
-      "start_time": "07:00",
-      "end_time": "08:30",
-      "enabled": true
-    },
-    {
       "id": "commute_subway_countdown",
       "name": "50th St Next Trains",
       "module": "subway_countdown",
