@@ -43,7 +43,7 @@
       "module": "subway_countdown",
       "start_time": "08:30",
       "end_time": "09:30",
-      "enabled": true
+      "enabled": false
     },
     {
       "id": "daytime_weather",
