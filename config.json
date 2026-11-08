@@ -59,7 +59,7 @@
       "module": "markets",
       "start_time": "16:15",
       "end_time": "17:30",
-      "enabled": true
+      "enabled": false
     },
     {
       "id": "evening_sports",
@@ -70,7 +70,8 @@
       "enabled": true,
       "teams": [
         "BUF",
-        "NYJ"
+        "NYJ",
+        "NYG"
       ]
     },
     {
