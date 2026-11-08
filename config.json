@@ -42,7 +42,7 @@
       "name": "Weather & Rain",
       "module": "weather",
       "start_time": "09:30",
-      "end_time": "16:15",
+      "end_time": "23:15",
       "enabled": true
     },
     {
