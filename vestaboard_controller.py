@@ -26,13 +26,12 @@ def count_flaps(line: str) -> int:
     return len(clean)
 
 def pad_flaps_center(text: str, width: int = 15) -> str:
-    current_len = count_flaps(text)
-    if current_len >= width:
-        return text[:width]
-    total_spaces = width - current_len
-    left = total_spaces // 2
-    right = total_spaces - left
-    return (" " * left) + text + (" " * right)
+    """
+    Returns trimmed text for centered lines.
+    Vestaboard API automatically centers lines horizontally on the 15-column board.
+    Manual pre-padding with spaces causes Vestaboard to double-center and shift text to the right.
+    """
+    return text.strip()
 
 # ==============================================================================
 # Modules
@@ -83,11 +82,11 @@ def get_weather(lat: float, lon: float) -> list[str]:
         is_precip = code in PRECIP_CODES
 
         rain_text = "RAIN:100%" if rain >= 100 else f"RAIN: {rain:>2}%"
-        bottom_row = f"{{67}}{{67}} {rain_text} {{67}}{{67}}" if is_precip else f"   {rain_text}   "
+        bottom_row = f"{{67}}{{67}} {rain_text} {{67}}{{67}}" if is_precip else rain_text
 
         return [
-            pad_flaps_center(condition, 15),
-            pad_flaps_center(f"{temp}  H:{high} L:{low}", 15),
+            condition,
+            f"{temp}  H:{high} L:{low}",
             bottom_row,
         ]
     except Exception as e:
@@ -119,7 +118,7 @@ def get_subway_status() -> list[str]:
         return "{66} OK " if ("GOOD" in s or "NORMAL" in s) else ("{65} DLY" if "DELAY" in s else "{63} CHG")
 
     return [
-        pad_flaps_center("50TH ST  C / E", 15),
+        "50TH ST C/E",
         f"C TRAIN: {get_badge(c_status)} ",
         f"E TRAIN: {get_badge(e_status)} ",
     ]
@@ -192,11 +191,11 @@ def get_subway_countdown() -> list[str]:
     """
     50th St C/E Next Trains Countdown Feed.
     Fetches live GTFS arrivals via MTA API proxy (api.wheresthefuckingtrain.com/by-id/A25).
-    Row 1: Centered station name (2 leading spaces: "  50TH ST C/E  ")
+    Row 1: Centered station name
     Row 2: UP: [Color][Route] [Min]M [Color][Route] [Min]M
     Row 3: DN: [Color][Route] [Min]M [Color][Route] [Min]M
     """
-    row1 = "  50TH ST C/E  "
+    row1 = "50TH ST C/E"
     
     up_trains = []
     dn_trains = []
