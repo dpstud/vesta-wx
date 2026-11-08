@@ -77,6 +77,10 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <button id="btnAwayToggle" class="px-2.5 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300 transition flex items-center gap-1.5" title="Toggle Away Mode (Pause Routines)">
+          <span id="awayDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="awayText">Home</span>
+        </button>
         <button id="btnSound" class="w-8 h-8 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs transition">
           <span id="soundIcon">🔊</span>
         </button>
@@ -89,6 +93,18 @@
 
   <!-- Mobile-Optimized Studio Container -->
   <main class="max-w-2xl mx-auto px-4 py-4 sm:py-6 flex-1 w-full space-y-6">
+
+    <!-- Away Mode Alert Banner (Visible when paused) -->
+    <div id="awayBanner" class="hidden p-3.5 rounded-2xl border border-amber-500/40 bg-amber-950/40 backdrop-blur-xl text-amber-200 text-xs flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">⏸️</span>
+        <div>
+          <div class="font-bold text-amber-300 text-xs">Away Mode Active (Paused)</div>
+          <div class="text-[11px] text-zinc-400">Scheduled routines are paused. Flaps will not spin while you are away.</div>
+        </div>
+      </div>
+      <button id="btnResumeAway" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow shrink-0">Resume</button>
+    </div>
 
     <!-- 1. Interactive Studio: Display + Text Input -->
     <section class="bg-zinc-900/70 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-4">
@@ -284,6 +300,7 @@
         <div>
           <h2 class="text-sm font-semibold text-white flex items-center gap-2">
             <span>📅</span> Daily Lineup & Routine
+            <span id="routinePauseBadge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold font-flap">PAUSED</span>
           </h2>
           <p class="text-xs text-zinc-400">Overlapping windows alternate evenly every 5 minutes.</p>
         </div>
@@ -357,6 +374,40 @@
   <script>
     const ROWS = 3, COLS = 15;
     let sound = true, aCtx = null, activeRow = 1;
+    let isPaused = false;
+
+    function updateAwayUI() {
+      const dot = document.getElementById("awayDot");
+      const text = document.getElementById("awayText");
+      const btn = document.getElementById("btnAwayToggle");
+      const banner = document.getElementById("awayBanner");
+      const pauseBadge = document.getElementById("routinePauseBadge");
+
+      if (isPaused) {
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+        if (text) { text.textContent = "Away"; text.className = "text-amber-300 font-semibold"; }
+        if (btn) btn.className = "px-2.5 py-1.5 rounded-full border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/50 text-xs font-medium text-amber-200 transition flex items-center gap-1.5";
+        if (banner) banner.classList.remove("hidden");
+        if (pauseBadge) pauseBadge.classList.remove("hidden");
+      } else {
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        if (text) { text.textContent = "Home"; text.className = "text-zinc-300"; }
+        if (btn) btn.className = "px-2.5 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300 transition flex items-center gap-1.5";
+        if (banner) banner.classList.add("hidden");
+        if (pauseBadge) pauseBadge.classList.add("hidden");
+      }
+    }
+
+    async function toggleAwayMode(forceVal = null) {
+      if (forceVal !== null) {
+        isPaused = forceVal;
+      } else {
+        isPaused = !isPaused;
+      }
+      updateAwayUI();
+      setStatus(isPaused ? "⏸️ Away Mode activated. Routines paused." : "▶️ Home Mode restored. Routines active.");
+      await autoSaveRoutine();
+    }
 
     const MODULES = {
       weather: { icon: "🌦️", name: "Weather & Rain" },
@@ -773,6 +824,14 @@
 
     document.getElementById("btnPrevWeather").addEventListener("click", () => { loadWeather(false); });
     document.getElementById("btnPrevSubwayStatus").addEventListener("click", () => { loadSubwayStatus(false); });
+    document.getElementById("btnAwayToggle").addEventListener("click", () => toggleAwayMode());
+    document.getElementById("btnResumeAway").addEventListener("click", () => toggleAwayMode(false));
+
+    window.addEventListener("focus", () => loadCloudConfig());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") loadCloudConfig();
+    });
+
     document.getElementById("btnPrevSubwayCount").addEventListener("click", () => { loadSubwayCount(false); });
     document.getElementById("btnPrevMarkets").addEventListener("click", () => { loadMarkets(); setStatus("Loaded market close preview."); });
     document.getElementById("btnPrevBreck").addEventListener("click", () => { loadBreck(false); });
@@ -1089,6 +1148,7 @@
       }));
 
       return {
+        paused: isPaused,
         timezone: localStorage.getItem("VESTA_TZ") || "America/New_York",
         coordinates: {
           latitude: parseFloat(localStorage.getItem("VESTA_LAT") || "40.7128"),
@@ -1132,12 +1192,18 @@
           }
         }
 
-        // 3. Update routine & re-render if valid routine exists in cloud
-        if (configData && Array.isArray(configData.routine) && configData.routine.length > 0) {
-          routine = configData.routine;
-          try { localStorage.setItem("VESTA_ROUTINE", JSON.stringify(routine)); } catch (e) {}
-          renderRoutine();
-          if (badge) badge.textContent = "Cloud synced ✓";
+        // 3. Update paused & routine if valid config exists in cloud
+        if (configData) {
+          if (typeof configData.paused === "boolean") {
+            isPaused = configData.paused;
+            updateAwayUI();
+          }
+          if (Array.isArray(configData.routine) && configData.routine.length > 0) {
+            routine = configData.routine;
+            try { localStorage.setItem("VESTA_ROUTINE", JSON.stringify(routine)); } catch (e) {}
+            renderRoutine();
+            if (badge) badge.textContent = "Cloud synced ✓";
+          }
         }
       } catch (err) {
         console.warn("Could not load cloud config:", err);
