@@ -70,7 +70,7 @@
       "id": "night_subway_status",
       "name": "50th St Status",
       "module": "subway_status",
-      "start_time": "22:00",
+      "start_time": "10:00",
       "end_time": "23:59",
       "enabled": false
     }
