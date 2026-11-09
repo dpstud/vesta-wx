@@ -797,12 +797,16 @@
           let dayStr = "";
           try {
             const dt = new Date(ev.date);
-            const wk = dt.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
-            let hr = dt.getHours();
-            const ap = hr < 12 ? "A" : "P";
-            hr = hr % 12 || 12;
-            const mn = String(dt.getMinutes()).padStart(2, "0");
-            dayStr = `${wk} ${hr}:${mn}${ap}`;
+            const tz = localStorage.getItem("VESTA_TZ") || "America/New_York";
+            const dayFmt = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: tz }).format(dt).toUpperCase();
+            const timeParts = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz }).formatToParts(dt);
+            let hr = "", mn = "", ap = "";
+            for (const part of timeParts) {
+              if (part.type === "hour") hr = part.value;
+              else if (part.type === "minute") mn = part.value;
+              else if (part.type === "dayPeriod") ap = part.value.toUpperCase().replace("AM", "A").replace("PM", "P").slice(0, 1);
+            }
+            dayStr = `${dayFmt} ${hr}:${mn}${ap}`;
           } catch (e) {
             dayStr = (status.type?.shortDetail || "SOON").toUpperCase();
           }
