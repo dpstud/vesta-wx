@@ -253,7 +253,7 @@ def get_markets() -> list[str]:
         results.append(f"{label:<4}  {sign}{abs(pct):.1f}% {icon}  ")
     return results
 
-def parse_nfl_event(ev: dict, team_code: str, t_name: str) -> list[str] | None:
+def parse_nfl_event(ev: dict, team_code: str, t_name: str, tz_name: str = "America/New_York") -> list[str] | None:
     comp = ev.get("competitions", [{}])[0]
     competitors = comp.get("competitors", [])
     if len(competitors) < 2:
@@ -281,6 +281,12 @@ def parse_nfl_event(ev: dict, team_code: str, t_name: str) -> list[str] | None:
     h_score = str(home_c.get("score", "0"))
     a_score = str(away_c.get("score", "0"))
 
+    # Clean score layout: city letters and digits separated by natural spaces (no pipe/I)
+    s_away = f"{a_code} {a_score}"
+    s_home = f"{h_code} {h_score}"
+    mid_spaces = 15 - len(s_away) - len(s_home)
+    score_row = (s_away + (" " * max(1, mid_spaces)) + s_home)[:15]
+
     row1 = t_name[:15]
 
     if state == "in":
@@ -291,12 +297,12 @@ def parse_nfl_event(ev: dict, team_code: str, t_name: str) -> list[str] | None:
             row2 = "HALFTIME"
         else:
             row2 = f"QTR {period}  {clock}"
-        row3 = f"{a_code} {a_score}|{h_code} {h_score}"
-        return [row1, row2, row3]
+        return [row1, row2, score_row]
     elif state == "pre":
         try:
             raw_d = ev.get("date", "")
-            dt = datetime.datetime.fromisoformat(raw_d.replace("Z", "+00:00")).astimezone()
+            tz = ZoneInfo(tz_name) if ZoneInfo else None
+            dt = datetime.datetime.fromisoformat(raw_d.replace("Z", "+00:00")).astimezone(tz)
             hr = dt.strftime("%I").lstrip("0")
             mn = dt.strftime("%M")
             ap = "A" if dt.hour < 12 else "P"
@@ -312,11 +318,10 @@ def parse_nfl_event(ev: dict, team_code: str, t_name: str) -> list[str] | None:
         return [row1, row2, row3]
     elif state == "post":
         row2 = "FINAL"
-        row3 = f"{a_code} {a_score}|{h_code} {h_score}"
-        return [row1, row2, row3]
+        return [row1, row2, score_row]
     return None
 
-def get_sports(team_code: str = "BUF") -> list[str]:
+def get_sports(team_code: str = "BUF", tz_name: str = "America/New_York") -> list[str]:
     team_names = {"BUF": "BUFFALO BILLS", "NYJ": "NEW YORK JETS", "NYG": "NEW YORK GIANTS"}
     team_ids = {"BUF": "2", "NYJ": "20", "NYG": "19"}
     t_code = team_code.upper()
@@ -330,7 +335,7 @@ def get_sports(team_code: str = "BUF") -> list[str]:
         sb_url = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
         res = requests.get(sb_url, headers=headers, timeout=8).json()
         for ev in res.get("events", []):
-            parsed = parse_nfl_event(ev, t_code, t_name)
+            parsed = parse_nfl_event(ev, t_code, t_name, tz_name)
             if parsed:
                 return parsed
     except Exception as e:
@@ -341,7 +346,7 @@ def get_sports(team_code: str = "BUF") -> list[str]:
         sched_url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{t_id}/schedule"
         res2 = requests.get(sched_url, headers=headers, timeout=8).json()
         for ev in res2.get("events", []):
-            parsed = parse_nfl_event(ev, t_code, t_name)
+            parsed = parse_nfl_event(ev, t_code, t_name, tz_name)
             if parsed:
                 return parsed
     except Exception as e2:
@@ -446,13 +451,11 @@ def get_mct() -> list[str]:
     }
 
     # 1. Primary: Scrape CruiseMapper Port 98 (NYC Manhattan-Brooklyn)
-    # CruiseMapper serves full static HTML tables with real ship names & departures
     try:
         cm_url = "https://www.cruisemapper.com/ports/new-york-port-98"
         res = requests.get(cm_url, headers=headers, timeout=8)
         if res.status_code == 200:
             html = res.text
-            # Check for active / scheduled ships calling at NYC
             priority_ships = [
                 ("MSC MERAVIGLIA", "DEPARTS SUN 7PM"),
                 ("MAJESTIC PRINCESS", "DEPARTS: 4:00PM"),
@@ -483,7 +486,6 @@ def get_mct() -> list[str]:
         except Exception as e2:
             print(f"CruiseTimeTables fallback error: {e2}")
 
-    # If no ship is found in port
     if not docked_ship:
         row2 = "NO SHIPS DOCKED"
         row3 = "  PIERS 88-92  "
@@ -674,7 +676,7 @@ def main():
     elif module_to_run == "markets":
         lines = get_markets()
     elif module_to_run == "sports":
-        lines = get_sports(team)
+        lines = get_sports(team, config.get("timezone", "America/New_York"))
     elif module_to_run == "breck":
         lines = get_breck()
     elif module_to_run == "mct":
