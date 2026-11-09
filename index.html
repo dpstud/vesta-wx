@@ -753,59 +753,117 @@
     }
 
     async function loadSports(sendAfter = false) {
-      const t = document.getElementById("sportsTeam").value;
+      const t = (document.getElementById("sportsTeam").value || "BUF").toUpperCase();
       const teamIds = { "BUF": "2", "NYJ": "20", "NYG": "19" };
       const teamNames = { "BUF": "BUFFALO BILLS", "NYJ": "NEW YORK JETS", "NYG": "NEW YORK GIANTS" };
       const tid = teamIds[t] || "2";
       const tname = teamNames[t] || "BUFFALO BILLS";
 
-      setStatus(`Fetching live ${tname} schedule...`);
+      setStatus(`Fetching live ${tname} updates...`);
+
+      const parseEvent = (ev) => {
+        const comp = ev.competitions?.[0] || {};
+        const comps = comp.competitors || [];
+        if (comps.length < 2) return null;
+
+        let myC = null, oppC = null;
+        for (const c of comps) {
+          if ((c.team?.abbreviation || "").toUpperCase() === t) myC = c;
+          else oppC = c;
+        }
+        if (!myC || !oppC) return null;
+
+        const status = comp.status || ev.status || {};
+        const state = (status.type?.state || "").toLowerCase();
+        const homeC = comps[0]?.homeAway === "home" ? comps[0] : comps[1];
+        const awayC = comps[0]?.homeAway === "home" ? comps[1] : comps[0];
+
+        const hCode = (homeC?.team?.abbreviation || "HM").toUpperCase();
+        const aCode = (awayC?.team?.abbreviation || "AW").toUpperCase();
+        const hScore = String(homeC?.score || "0");
+        const aScore = String(awayC?.score || "0");
+
+        if (state === "in") {
+          const period = status.period || 1;
+          const clock = status.displayClock || "LIVE";
+          const shortD = (status.type?.shortDetail || "").toLowerCase();
+          const clockStr = shortD.includes("half") ? "HALFTIME" : `QTR ${period}  ${clock}`;
+          return [
+            padFlaps(tname.slice(0, 15), 15),
+            padFlaps(clockStr, 15),
+            padFlaps(`${aCode} ${aScore}|${hCode} ${hScore}`, 15)
+          ];
+        } else if (state === "pre") {
+          let dayStr = "";
+          try {
+            const dt = new Date(ev.date);
+            const wk = dt.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+            let hr = dt.getHours();
+            const ap = hr < 12 ? "A" : "P";
+            hr = hr % 12 || 12;
+            const mn = String(dt.getMinutes()).padStart(2, "0");
+            dayStr = `${wk} ${hr}:${mn}${ap}`;
+          } catch (e) {
+            dayStr = (status.type?.shortDetail || "SOON").toUpperCase();
+          }
+          const isHome = (myC.homeAway === "home");
+          const oppName = (oppC.team?.shortDisplayName || oppC.team?.abbreviation || "OPP").toUpperCase();
+          const prefix = isHome ? "vs" : "@";
+          return [
+            padFlaps(tname.slice(0, 15), 15),
+            padFlaps(`NEXT: ${dayStr}`, 15),
+            padFlaps(`${prefix} ${oppName}`, 15)
+          ];
+        } else if (state === "post") {
+          return [
+            padFlaps(tname.slice(0, 15), 15),
+            padFlaps("FINAL", 15),
+            padFlaps(`${aCode} ${aScore}|${hCode} ${hScore}`, 15)
+          ];
+        }
+        return null;
+      };
+
       try {
-        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${tid}/schedule`);
+        // 1. Live NFL Scoreboard (real-time in-progress games and active week slate)
+        const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
         if (res.ok) {
           const data = await res.json();
-          const events = data.events || [];
-          for (const ev of events) {
-            const state = ev.status?.type?.state;
-            const comp = ev.competitions?.[0] || {};
-            const comps = comp.competitors || [];
-            if (state === "in") {
-              const clock = ev.status?.displayClock || "LIVE";
-              const period = ev.status?.period || 1;
-              const hScore = comps[0]?.score || "0";
-              const aScore = comps[1]?.score || "0";
-              const hCode = comps[0]?.team?.abbreviation || "HM";
-              const aCode = comps[1]?.team?.abbreviation || "AW";
-              currentLines = [
-                padFlaps(tname.slice(0, 15), 15),
-                padFlaps(`QTR ${period}  ${clock}`, 15),
-                padFlaps(`${aCode} ${aScore}|${hCode} ${hScore}`, 15)
-              ];
-              renderGrid(currentLines);
-              document.getElementById("displayMode").textContent = `SPORTS (${t}) LIVE`;
-              setStatus(`Loaded live game: ${tname}`);
-              if (sendAfter) sendToBoard(currentLines);
-              return;
-            } else if (state === "pre") {
-              const dt = new Date(ev.date);
-              const opp = comps[0]?.team?.id === tid ? comps[1] : comps[0];
-              const oppName = (opp?.team?.shortDisplayName || "OPP").toUpperCase();
-              const dayStr = dt.toLocaleDateString("en-US", { weekday: "short", hour: "numeric", minute: "numeric" }).toUpperCase().replace(" AM", "A").replace(" PM", "P");
-              currentLines = [
-                padFlaps(tname.slice(0, 15), 15),
-                padFlaps(`NEXT: ${dayStr}`, 15),
-                padFlaps(`vs ${oppName}`, 15)
-              ];
+          for (const ev of (data.events || [])) {
+            const p = parseEvent(ev);
+            if (p) {
+              currentLines = p;
               renderGrid(currentLines);
               document.getElementById("displayMode").textContent = `SPORTS (${t})`;
-              setStatus(`Loaded live ESPN schedule for ${tname}: Next vs ${oppName}`);
+              setStatus(`Loaded live ESPN data for ${tname}`);
               if (sendAfter) sendToBoard(currentLines);
               return;
             }
           }
         }
       } catch (err) {
-        console.warn("ESPN fetch error:", err);
+        console.warn("ESPN scoreboard fetch error:", err);
+      }
+
+      // 2. Schedule fallback (bye weeks)
+      try {
+        const res2 = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${tid}/schedule`);
+        if (res2.ok) {
+          const data2 = await res2.json();
+          for (const ev of (data2.events || [])) {
+            const p = parseEvent(ev);
+            if (p) {
+              currentLines = p;
+              renderGrid(currentLines);
+              document.getElementById("displayMode").textContent = `SPORTS (${t})`;
+              setStatus(`Loaded ESPN schedule for ${tname}`);
+              if (sendAfter) sendToBoard(currentLines);
+              return;
+            }
+          }
+        }
+      } catch (err2) {
+        console.warn("ESPN schedule fallback error:", err2);
       }
 
       currentLines = [
