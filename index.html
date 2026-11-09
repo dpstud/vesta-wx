@@ -783,6 +783,11 @@
         const hScore = String(homeC?.score || "0");
         const aScore = String(awayC?.score || "0");
 
+        const sAway = `${aCode} ${aScore}`;
+        const sHome = `${hCode} ${hScore}`;
+        const midSpaces = Math.max(1, 15 - sAway.length - sHome.length);
+        const scoreRow = (sAway + " ".repeat(midSpaces) + sHome).slice(0, 15);
+
         if (state === "in") {
           const period = status.period || 1;
           const clock = status.displayClock || "LIVE";
@@ -791,7 +796,7 @@
           return [
             padFlaps(tname.slice(0, 15), 15),
             padFlaps(clockStr, 15),
-            padFlaps(`${aCode} ${aScore}|${hCode} ${hScore}`, 15)
+            scoreRow
           ];
         } else if (state === "pre") {
           let dayStr = "";
@@ -822,7 +827,7 @@
           return [
             padFlaps(tname.slice(0, 15), 15),
             padFlaps("FINAL", 15),
-            padFlaps(`${aCode} ${aScore}|${hCode} ${hScore}`, 15)
+            scoreRow
           ];
         }
         return null;
