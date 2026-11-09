@@ -191,7 +191,7 @@ def get_subway_countdown() -> list[str]:
     """
     50th St C/E Next Trains Countdown Feed.
     Fetches live GTFS arrivals via MTA API proxy (api.wheresthefuckingtrain.com/by-id/A25).
-    Row 1: Centered station name
+    Row 1: Centered station name (2 leading spaces: "  50TH ST C/E  ")
     Row 2: UP: [Color][Route] [Min]M [Color][Route] [Min]M
     Row 3: DN: [Color][Route] [Min]M [Color][Route] [Min]M
     """
@@ -253,49 +253,104 @@ def get_markets() -> list[str]:
         results.append(f"{label:<4}  {sign}{abs(pct):.1f}% {icon}  ")
     return results
 
-def get_sports(team_code: str = "BUF") -> list[str]:
-    team_ids = {"BUF": "2", "NYJ": "20", "NYG": "19"}
-    team_names = {"BUF": "BUFFALO BILLS", "NYJ": "NEW YORK JETS", "NYG": "NEW YORK GIANTS"}
-    t_id = team_ids.get(team_code.upper(), "2")
-    t_name = team_names.get(team_code.upper(), "BUFFALO BILLS")
+def parse_nfl_event(ev: dict, team_code: str, t_name: str) -> list[str] | None:
+    comp = ev.get("competitions", [{}])[0]
+    competitors = comp.get("competitors", [])
+    if len(competitors) < 2:
+        return None
 
+    my_c, opp_c = None, None
+    for c in competitors:
+        abbr = c.get("team", {}).get("abbreviation", "").upper()
+        if abbr == team_code:
+            my_c = c
+        else:
+            opp_c = c
+
+    if not my_c or not opp_c:
+        return None
+
+    status = comp.get("status") or ev.get("status", {})
+    state = status.get("type", {}).get("state", "").lower()
+
+    home_c = competitors[0] if competitors[0].get("homeAway") == "home" else competitors[1]
+    away_c = competitors[1] if competitors[0].get("homeAway") == "home" else competitors[0]
+
+    h_code = home_c.get("team", {}).get("abbreviation", "HM").upper()
+    a_code = away_c.get("team", {}).get("abbreviation", "AW").upper()
+    h_score = str(home_c.get("score", "0"))
+    a_score = str(away_c.get("score", "0"))
+
+    row1 = t_name[:15]
+
+    if state == "in":
+        period = status.get("period", 1)
+        clock = status.get("displayClock", "LIVE")
+        short_d = status.get("type", {}).get("shortDetail", "").lower()
+        if "half" in short_d:
+            row2 = "HALFTIME"
+        else:
+            row2 = f"QTR {period}  {clock}"
+        row3 = f"{a_code} {a_score}|{h_code} {h_score}"
+        return [row1, row2, row3]
+    elif state == "pre":
+        try:
+            raw_d = ev.get("date", "")
+            dt = datetime.datetime.fromisoformat(raw_d.replace("Z", "+00:00")).astimezone()
+            hr = dt.strftime("%I").lstrip("0")
+            mn = dt.strftime("%M")
+            ap = "A" if dt.hour < 12 else "P"
+            wk = dt.strftime("%a").upper()
+            day_str = f"{wk} {hr}:{mn}{ap}"
+        except Exception:
+            day_str = status.get("type", {}).get("shortDetail", "SOON").upper()
+
+        opp_name = opp_c.get("team", {}).get("shortDisplayName") or opp_c.get("team", {}).get("abbreviation", "OPP")
+        prefix = "vs" if my_c.get("homeAway") == "home" else "@"
+        row2 = f"NEXT: {day_str}"[:15]
+        row3 = f"{prefix} {opp_name.upper()}"[:15]
+        return [row1, row2, row3]
+    elif state == "post":
+        row2 = "FINAL"
+        row3 = f"{a_code} {a_score}|{h_code} {h_score}"
+        return [row1, row2, row3]
+    return None
+
+def get_sports(team_code: str = "BUF") -> list[str]:
+    team_names = {"BUF": "BUFFALO BILLS", "NYJ": "NEW YORK JETS", "NYG": "NEW YORK GIANTS"}
+    team_ids = {"BUF": "2", "NYJ": "20", "NYG": "19"}
+    t_code = team_code.upper()
+    t_name = team_names.get(t_code, "BUFFALO BILLS")
+    t_id = team_ids.get(t_code, "2")
+
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+    # 1. Primary: Real-time ESPN NFL Scoreboard (active game-week with live quarter, clock & scores)
     try:
-        url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{t_id}/schedule"
-        res = requests.get(url, timeout=8).json()
-        events = res.get("events", [])
-        for ev in events:
-            state = ev.get("status", {}).get("type", {}).get("state")
-            comp = ev.get("competitions", [{}])[0]
-            competitors = comp.get("competitors", [])
-            if state == "in":
-                clock = ev.get("status", {}).get("displayClock", "LIVE")
-                period = ev.get("status", {}).get("period", 1)
-                h_score = competitors[0].get("score", "0")
-                a_score = competitors[1].get("score", "0")
-                h_code = competitors[0].get("team", {}).get("abbreviation", "HM")
-                a_code = competitors[1].get("team", {}).get("abbreviation", "AW")
-                return [
-                    pad_flaps_center(t_name[:15], 15),
-                    pad_flaps_center(f"QTR {period}  {clock}", 15),
-                    pad_flaps_center(f"{a_code} {a_score}|{h_code} {h_score}", 15),
-                ]
-            elif state == "pre":
-                dt = datetime.datetime.fromisoformat(ev.get("date", "").replace("Z", "+00:00")).astimezone()
-                opp = competitors[1] if competitors[0].get("team", {}).get("id") == t_id else competitors[0]
-                opp_name = opp.get("team", {}).get("shortDisplayName", "OPP").upper()
-                day_str = dt.strftime("%a %I:%M%p").upper().replace("AM", "A").replace("PM", "P").lstrip("0")
-                return [
-                    pad_flaps_center(t_name[:15], 15),
-                    pad_flaps_center(f"NEXT: {day_str}", 15),
-                    pad_flaps_center(f"vs {opp_name}", 15),
-                ]
-    except Exception:
-        pass
+        sb_url = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+        res = requests.get(sb_url, headers=headers, timeout=8).json()
+        for ev in res.get("events", []):
+            parsed = parse_nfl_event(ev, t_code, t_name)
+            if parsed:
+                return parsed
+    except Exception as e:
+        print(f"ESPN scoreboard error: {e}")
+
+    # 2. Secondary fallback: Team schedule endpoint (useful during bye weeks or next week lookahead)
+    try:
+        sched_url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{t_id}/schedule"
+        res2 = requests.get(sched_url, headers=headers, timeout=8).json()
+        for ev in res2.get("events", []):
+            parsed = parse_nfl_event(ev, t_code, t_name)
+            if parsed:
+                return parsed
+    except Exception as e2:
+        print(f"ESPN schedule fallback error: {e2}")
 
     return [
-        pad_flaps_center(t_name[:15], 15),
-        pad_flaps_center("NEXT GAME", 15),
-        pad_flaps_center("SCHED PENDING", 15),
+        t_name[:15],
+        "NEXT GAME",
+        "SCHED PENDING",
     ]
 
 def get_breck() -> list[str]:
@@ -391,11 +446,13 @@ def get_mct() -> list[str]:
     }
 
     # 1. Primary: Scrape CruiseMapper Port 98 (NYC Manhattan-Brooklyn)
+    # CruiseMapper serves full static HTML tables with real ship names & departures
     try:
         cm_url = "https://www.cruisemapper.com/ports/new-york-port-98"
         res = requests.get(cm_url, headers=headers, timeout=8)
         if res.status_code == 200:
             html = res.text
+            # Check for active / scheduled ships calling at NYC
             priority_ships = [
                 ("MSC MERAVIGLIA", "DEPARTS SUN 7PM"),
                 ("MAJESTIC PRINCESS", "DEPARTS: 4:00PM"),
@@ -426,6 +483,7 @@ def get_mct() -> list[str]:
         except Exception as e2:
             print(f"CruiseTimeTables fallback error: {e2}")
 
+    # If no ship is found in port
     if not docked_ship:
         row2 = "NO SHIPS DOCKED"
         row3 = "  PIERS 88-92  "
