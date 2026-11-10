@@ -5,7 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <title>Vestaboard Studio</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vestaboard">
+  <meta name="application-name" content="Vestaboard Studio">
+  <meta name="theme-color" content="#09090b">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Cute Split-Flap Favicons & Touch Icons -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwOTA5MGIiLz4KICA8IS0tIFRvcCBGbGFwIC0tPgogIDxwYXRoIGQ9Ik0gOCAyMCBDIDggMTMuNCAxMy40IDggMjAgOCBMIDQ0IDggQyA1MC42IDggNTYgMTMuNCA1NiAyMCBMIDU2IDMxLjUgTCA4IDMxLjUgWiIgZmlsbD0iIzI3MjcyYSIgc3Ryb2tlPSIjM2YzZjQ2IiBzdHJva2Utd2lkdGg9IjAuOCIvPgogIDwhLS0gQm90dG9tIEZsYXAgLS0+CiAgPHBhdGggZD0iTSA4IDMyLjUgTCA1NiAzMi41IEwgNTYgNDQgQyA1NiA1MC42IDUwLjYgNTYgNDQgNTYgTCAyMCA1NiBDIDEzLjQgNTYgOCA1MC42IDggNDQgWiIgZmlsbD0iIzE4MTgxYiIgc3Ryb2tlPSIjMjcyNzJhIiBzdHJva2Utd2lkdGg9IjAuOCIvPgogIDwhLS0gSGluZ2UgTm90Y2hlcyAtLT4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iMzIiIHI9IjIiIGZpbGw9IiMwOTA5MGIiLz4KICA8Y2lyY2xlIGN4PSI1NiIgY3k9IjMyIiByPSIyIiBmaWxsPSIjMDkwOTBiIi8+CiAgPCEtLSBTcGxpdCBzZWFtIC0tPgogIDxsaW5lIHgxPSI3IiB5MT0iMzIiIHgyPSI1NyIgeTI9IjMyIiBzdHJva2U9IiMwOTA5MGIiIHN0cm9rZS13aWR0aD0iMS4yIi8+CiAgPGxpbmUgeDE9IjgiIHkxPSIzMi44IiB4Mj0iNTYiIHkyPSIzMi44IiBzdHJva2U9IiMzZjNmNDYiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjYiLz4KICA8IS0tIEFtYmVyIFYgLS0+CiAgPGcgZmlsbD0iI2Y1OWUwYiIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sIEJsaW5rTWFjU3lzdGVtRm9udCwgc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zaXplPSIzNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+CiAgICA8Y2xpcFBhdGggaWQ9InRDbGlwIj48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iNDgiIGhlaWdodD0iMjMuNSIvPjwvY2xpcFBhdGg+CiAgICA8Y2xpcFBhdGggaWQ9ImJDbGlwIj48cmVjdCB4PSI4IiB5PSIzMi41IiB3aWR0aD0iNDgiIGhlaWdodD0iMjMuNSIvPjwvY2xpcFBhdGg+CiAgICA8dGV4dCB4PSIzMiIgeT0iNDQuNSIgY2xpcC1wYXRoPSJ1cmwoI3RDbGlwKSI+VjwvdGV4dD4KICAgIDx0ZXh0IHg9IjMyIiB5PSI0NC41IiBjbGlwLXBhdGg9InVybCgjYkNsaXApIj5WPC90ZXh0PgogIDwvZz4KPC9zdmc+">
+  <link rel="alternate icon" type="image/png" href="data:image/png;base64,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hVbEL9wxgYFwVoIBeMwz7UV5flczjp2yZgIGQQDAADy2bTTanapHMfw8LoHBEQAwAO8cb8Qf9roLcD7Hpxvx7E7/RjAoAgAGxKtt5/fL15ox78uJMDACAAbkyT+NxvRc1aMYXnb+g8ESADAg03NnIoAv2vv+SLx60OkIBslfHAyQxwBnt/ll/y4waAIABujFvc04fNxrbp/W7kQ8/oo7IzBoAgAGqNOJeNwGQZ/x4tvNeEcUwcAJABgwi90+67Ftbv9DFQQADNi+9xsWvP2VhZFQHWchqIAv3p3xhFcjoTICACrwy1d99CbCHglQJQEAFTgx04hf7yh78jt8vBEv+jwyVEYAQEU2F/42wOPbRqNjgySojACAijz/Ztlb37r9D9USAFCRhXbEz18tcxJ85cBI7H3f6Qeq5C8QKvRYoW8DlP74A4aBAIAKbT88Em+9W9af4dzCmbcggGqVdeaBIVTaBkHP7mzGiZly1z7AsBAAULHHXxmNVrvqUQyOTyHDcBAAULGjf2nEC7vLuAtw7FQjnt9Vxv9WGHaN8fHJ1G/ijo9PVD0EAAo1MzNd9RCWzR0AACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAAChQ+gCYmZmueggAFCj7/JM+AACApRMAAFAgAQAABRIAAFAgAQAABapFAGRfiQlALnWYd2oRAADA0ggAACiQAACAAtUmAOrwPAaA4VeX+aY2AQAALJ4AAIACCQAAKFCtAqAuz2UAGE51mmdqFQAAwOIIAAAoUO0CoE63ZwAYHnWbX2oXAADAhdUyAOpWaQBUq47zSi0DAAA4v9oGQB1rDYDBq+t8UtsAAADOrdYBUNdqA2Aw6jyP1DoAAICzq30A1LneAOifus8ftQ8AAOCLigiAulccAL1VwrxRRAAAAJ9VTACUUHMAdK+U+aKYAAAAPlFUAJRSdQAsT0nzRFEBEFHWjwvA4pU2PxQXABHl/cgAnF+J80KRAQAApSs2AEqsPQC+qNT5oNgAiCj3RwfgjJLngaIDIKLsHx+gZKWf/4sPAAAokQAIFQhQGud9AfA3DgaAMjjfnyEAPsVBAVBvzvOfEACf4+AAqCfn988SAGfhIAGoF+f1LxIA5+BgAagH5/OzEwDn4aAByM15/NwEwAU4eABycv4+v9GqB5DBxwfR+PhExSMB4EJM/IvjDsASOKgAhpvz9OIJgCVycAEMJ+fnpfEIYBk8EgAYHib+5XEHoAsOOoBqOQ8vnwDokoMPoBrOv93xCKAHPBIAGBwTf28IgB4SAgD9Y+LvLQHQB0IAoHdM/P0hAPpICAAsn4m/vwTAAAgBgMUz8Q+GABggIQBwbib+wRIAFRACAJ8w8VdDAFTo0we9GABKYtKvngAYEp//YxAEQJ2Y8IePABhSggDIzIQ//ARAEuf6YxIGQJVM9HkJgOT88QGwHDYDAoACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKND/B7VAhSPLP2jSAAAAAElFTkSuQmCC">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAeY0lEQVR4nO3dWZdd5ZnY8efUqZJUVRJgMdtMRgKEwAMYu1nGbtuYSdCJ277NykryDbLyCXKV/gC5zMpdroKgbUtMNph2sPFqsBgsJISEpJZkIRAIJEs1qKrOObmQMZOGqjrDPs9+f7+1+qJv7Nc6u/b733u/e7+N8fHJTgAARRmpegAAwOAJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAKNVj0AunPttV+teghAwQ4d2l/1EFimxvj4ZKfqQXBhJnogE2Ew/ATAkDLhA3UiCIaPABgSJnygJIKgegKgQiZ9ADFQFQFQARM/wBcJgcESAANk4ge4MCEwGAJgAEz8AEsnBPpLAPSRiR+ge0KgPwRAH5j4AXpPCPSWAOghEz9A/wmB3hAAPWDiBxg8IdAdmwF1yeQPUA3n3+4IgC44+ACq5Ty8fB4BLIMDDmD4eCSwNO4ALJHJH2A4OT8vjQBYAgcXwHBznl48jwAWwQEFkI9HAufnDsAFmPwBcnL+Pj8BcB4OHoDcnMfPTQCcg4MGoB6cz89OAJyFgwWgXpzXv0gAfI6DBKCenN8/SwB8ioMDoN6c5z8hAP7KQQFQBuf7MwRAOBgASuO8LwAAoEjFB4AKBChT6ef/ogOg9B8foHQlzwPFBkDJPzoAnyh1Pig2AACgZEUGQKm1B8DZlTgvFBcAJf7IAFxYafNDUQFQ2o8LwNKUNE8UFQAAwBnFBEBJVQfA8pUyXxQTAADAJ4oIgFJqDoDeKGHeKCIAAIDPqn0AlFBxAPRe3eeP2gcAAPBFtQ6AutcbAP1V53mk1gEAAJxdbQOgztUGwODUdT6pbQAAAOdWywCoa60BUI06ziu1DAAA4PxqFwB1rDQAqle3+aV2AQAAXJgAAIAC1SoA6nZ7BoDhUqd5plYBAAAsjgAAgAIJAAAoUG0CoE7PZQAYXnWZb2oTAADA4gkAACiQAACAAtUiAOryPAaAHOow79QiAACApREAAFAgAQAABRIAAFAgAQAABUofAHVYiQlAPtnnn/QBAAAsnQAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAIJAAAokAAAgAKNVj0AyvLf7v0w/uN3TlQ9jK7831cuin/61aVVD4O/2rTxVPyPf/9+1cPoymt/XhX/5f9cXfUwKIw7AAzUljdWVz2Erj1w61SMjnSqHgZ/9cjtp6oeQtfq8HdBPgKAgdpzdEXsPrqi6mF05ZLxVtxz40zVwyAivjTRirtvmK16GF2ZW2jEr96crHoYFEgAMHBbtue/2nm4BleddfDgrVPRTH435vk9E3HqtFMxg+eoY+Ce3LE6Wu1G1cPoyg/WT8fkinbVwyjew7flD7Gtbv9TEQHAwH043YwX949XPYyurBztxI9vma56GEW79kvz8bUvn656GF05NtWMF/dNVD0MCiUAqEQdHgM8UoOrz8wevm2q6iF07ckdq6Od+wkGiQkAKvHbPRNxcjb34XfX9TNx+epW1cMoVh1u/1v9T5Vyn4FJa67ViGd25V75PNKIeGhj/kkoo699+XRc96X5qofRlbfeWxF7kr8RQ24CgMps9RiAZarD1b/Ff1RNAFCZ1w+vioMfjVU9jK7ccuVcrLtsruphFKU50okHbs39/L/VbsRTOwUA1RIAVKoWdwFuzz0ZZXP3DbOxdiL32ovf7xuPY1PNqodB4QQAldq6Y3VkXwS9aeOpyP1Vg1zq8Olft/8ZBgKASh05MRrbDq6qehhdueqihbjj2tyfo81ifKwTP7wp9x2Xk7Mj8ds93v2negKAytXhashiwMG49+apGB/Lfc/omV2TMddyz4jqCQAq9+yuyZidz31CvG/DVKxo5p6YMqjD6v8t29dUPQSICAHAEJiaG4nnduf+JsBFq9rxvXV2COyntROt+LvkO/8d/Ggs/nR4ZdXDgIgQAAyJOrwNUIer02H20Mb8O//V4TinPgQAQ+GlA+Px3snRqofRle+vn441q+wQ2C/ZA6sTZ956gWEhABgK7U7EkztyPwZY0ezE/Rtyr1AfVtevnY/brs6989+2g6viyInckUu9CACGRh0WRz1sb4C+yH71H1GP45t6EQAMjf3HxmLnu7kXSN153WxcddFC1cOonU0bc99ZmZ1vxLNvefef4SIAGCpbki+SasSZLwPSO1/78um4NvnOf8/tnozpOadbhosjkqHy1M7VMZ/8Iyn2BuitOnz6N3vYUk8CgKFyYmYkfrd3vOphdGXdZXNxy5V2COyF5kgnHki+sPLoyWa8fCD3MU09CQCGzpY38i+WshiwN7771Zn4UvKd/57YsSbauT9fQE0JAIbOC2+Px4mZ3IfmQxtPxUjuJxlDwe1/6J/cZ1lqaaHdiKd25j5pXrGmFXdd79PA3ZhY0Y4frJ+uehhd2XFkZew/Nlb1MOCsBABDqQ5XTXYI7M69N0/HquQ7/9XhOKa+BABDaee7K2PfB7mvnH5883SsGM09gVUp+8d/5luNePpNAcDwEgAMra3JFwNOrmzHD5Pfwq7KpZOt+Lsbcj9CeWFv/rUs1Jujk6H1xI7V6VdPP1yDRWxVeGjjVPpFlNkDlvoTAAytoyeb8VLy96fvuXEmLh63Q+BSZV8/cXymGS+8nfvYpf4EAEMt+yKq0ZFOPLAh92Q2aDesnY9br8q989/TOydjoZ38Fga1JwAYar/ZPRlTyb+h7tPAS1OHxybZw5Uy5D6zUnuz8414dtdk1cPoyje+MhvXXGKHwMXKvpnSvg/y72pJGQQAQ2/rG/mvpjYlf6Y9KHWIJYv/yEIAMPS2HVwV75wYrXoYXcn+TvugZH9c0u6ceXsFMhAADL1O5D+p3rB2PjYmX9jWb3VYMPnSgfE4erJZ9TBgUQQAKdRhUVUdNrbppzq8MlmH45RyCABSOPTRWLx+eFXVw+jKg7fm/7hNP2Vf/T81NxK/2Z17wSplEQCksTX51dWlk624O/nnbftlsgY7/z27azJm5xUeeQgA0nhm12TMLeQ+wWa/yu2XH98yHSuTb5y0pQZvq1AWAUAaJ2dH4rdvT1Q9jK7ce/NUjCff4rYfsr8lceTEaLxyMPcjKsojAEgl+yKr8bFO/Ojm3K+69dplq1vx7etzPxrZ+sbqkHVkIwBI5cX943FsKvdrVtmvdntt08ZT6RdHuv1PRgKAVFrtRjy1M/fJ9u4bZmPtRKvqYQyN7EH0+uFVceijsaqHAUsmAEgn+2OA5kgnHtzoMUBExFcvnY8NV85VPYyuZD8eKZcAIJ3dR1fEnqMrqh5GV7Lvd98r2T+ONNdqxK+Sb1ZFuQQAKWV/5nrb1afj+rXzVQ+jUo3Iv/Pfv+yZiJOzTqPk5MglpSd3rI5WO/fKsezPvrv1zWtm48sX5975z+1/MhMApHRsqhl/2D9e9TC68vBtZa8DyP5RpDocg5RNAJBW9quvay6Zj69/pcwdAkdHOnH/htwBVIe7UJRNAJBWHZ6/lroY8HvrZuLiVbl3/tuafB0K5D57UrQ6rMB+4NapGB0p7xty2dc/7D66InYnfxMFBACpZX8McMl4K757Y+7P4C7V5Mr8O/9lP+4gQgCQXB2+wpb9anip7rtlKlYk3vmvDl+jhAgBQA1k/ybAD2+ajskVuZ+HL0X2tx/qsB8FRAgAauCJ5DuxrRztxL235L4lvlhXrGnFXdflfuSx1e1/akIAkN47NdiLvZS3AR5KvvPfydmR+Je3J6oeBvSEAKAWsr+S9e3rZ+Ly1fXfITB76Pxq12TMLSQuGPgUAUAt/HrXZMzO5z0xjzTOXB3X2brL5uLmK+z8B8NCAFALU3Mj8Zvdub8JUPe3AR65Pffiv0MfjcXrh3M/aoJPEwDURvbHABuunIsbL6vnDoGNiHjo1tyBk/1tE/g8AUBt/Ou/jcfRk7lfz8r+jPxc7rh2Nq5OvPNfJ868bQJ1IgCojXbnzAYtmW3aeCryrmQ4t+xh88rBVfHOidGqhwE9JQColS1vrKl6CF25+uKFuOPa2aqH0VNjzU7cl3znP7f/qSMBQK3s+2Asdr67suphdKVuiwG/v24mLkq889/sfCOeTb7pFJyNAKB2sr+qdf+GqRhrZv624WdlD5rf7J6MqTmnSurHUU3tPL1zMhbaeZ+kX7SqHd9fl/tzuR9bvbId31+X+zPH2YMSzkUAUDvHZ5rxu73jVQ+jK9mvmj9234bcO/8dPdmMlw7kPpbgXAQAtbRle+7FgN9fPx1rEj83/1j21f9P7Fgd7bz9AuclAKilF/aOx4mZvIf3imYn7rsl98r5K9csxJ3J32jYmvytEjifvGdIOI/5ViOefjP3s9vsV8+bbptKvfPfzndXxr4PxqoeBvSNAKC2si/euvO62bjqorxfz8u+jiH78QMXIgCorR1HVsb+Y3mv4BoRsWljzscA6y+fi5suz7vz30K7EU/v9O4/9SYAqLXsV3FZr6KzP7544e3xOD6Te18JuBABQK09mXwV9/rL5+LmK3JdSTci4qGkdy4+ZvEfJRAA1Np7J0fj5eTvcWe7mv5W8rULJ2ZG4oXk35GAxRAA1F72xwAPbTyVajV91scWH3tq5+qYbyX6B4dlEgDU3nO7J2M68bfcr1jTiruuy/Fp4Dp8v2Crnf8oRN6zIizS7Hwjnn1rouphdOXh23JMqtm/YLj/2FjsOJJ7N0lYLAFAEbIv6rrvlhzf1M9++z/74yJYCgFAEf54YFUcOTFa9TCWbXJlO36wfrh31Vuzqh3fS7yLYbtz5q0RKIUAoAidiNia/OQ+7G8D3L9hKlY0h/8uxbm8dGA83juZNxJhqQQAxdia/PbuPetm4uLx4X2+PuyBciHZjw9YKgFAMQ5+NBZ/Opx3gdfoSCce2DCck+xVFy3EHYl3/pueG4nndvv0L2URABRlS/LFgMP6NsCmjaci85vzz741EbPzmf8XwNIJAIryzJuTMZf4Iy/fuGY2vnLJ8H1lb1jDZLG2bM8dhrAc6Ve8HDq0/zP//7XXfrWikZDBydmR+O2eibh/Q84JqxERD288Ff/rxUuqHsrf3HzFXKxPvPPfkROjse3gqqqHQRKfn3Myq90dgEOH9v/t/+Bssn/pbdjetU+/+G/H6sj77gKDUNd5pXYB8Gl1+7Hojd/vG49jU3m3er3h0vm49arTVQ8jIiJGGhEPZt/5z+p/zqPO80itAyAialltdKfVbsTTO3Ov+B6Wq+67rpuJK9cM35qExfrT4ZVx8KOxqofBECph7qh9AHys7j8kS5P9bYCHNk4NxQ6Bmyz+o4ZKmS+KCYCIcn5ULuyt91bEnqMrqh7Gsl062Yq7b6j2s7srRnPv/DfXasQzu3LfCaL3SponigoA+LQt2RcD3l7tY4C/Xz8dq1cO75cJL+S3eybi5KxTIOUq7ugvqe44vyd3rI524uXfP7ppOlaNVfc/YFjWISyXnf/4vNLmh+ICIKK8H5mzOzbVjD/sH696GMs2saIdP7qpmlvwF61qxz035t3578PpZryY+Len90qcF4oMAPhY9kVgj1T0GOCBDVMxlnjnvyd3rI5WewhWUUKFBABFe37PRJw6nffP4O4bZmPtRGvg/71Vrz/oVvaPQUEvNMbHJ/NmPACwLHkvfQCAZRMAAFAgAQAABRIAAFAgAQAABRIAAFCg0aoHUJXvfOeeJ6oeAwDD4aWXfv9I1WMYtGK/AzA+PlH1EBhC//M/zMU/3pF3f/v//L9XxnNvNnv+n7tyNOK1/z4Tq1flPF0cONaI7/2TT/9ybjMz01UPYeA8AoBP2fzH3k+eg/Szb/UnXh64rZV28o+I2PzHYm92wjkVGQCu/jmXF3Y3472/5P1G/AO3tWL1yt5P1D/tU1gMQqcT8dg2AcD5lTgvFBcAJf7ILF67E/F44sli1VjEpq/1dm+ASyY68aNbBr/fQK/8676ROPRh3qhjcEqbH4oLALiQR5M/Bvjpnb2drP/dN1sxmvifZHPioIN+KioASqs7lmfPeyOx/c95/zS+u74VV1zUu8cAP70z7+3/2fmIJ15PXC8MXEnzRN6z3BKV9KPSvcyLxpojET+5ozd3Aa5Z24m7rm/35D+rCk+/MRqnTrv9z9KUMl/UPgDGxyeK+THpnZ+/2oyFvI+942c9umr/2Z0L0Ug8fz76sqt/lqeEuaPWAVD3H4/++XCqEc/vyjt53P6Vdqy/svsr916vJxik9/7SiN/tyfsbMhzqPI/ULgA+rrY6/2gMxqOJHwNERPysy8n7a9e0Y/0VeW//P75tNNp5P13AEKnrvJI+AD79w9Ttx6Faz+5sxvHpvPe/f3pHd7fvMy/+i4jYvM3VP71XpzknfQBAv8y3In75Wt5J5Jq1nfj2Dcu7gm+ORPzkm3lv/2//80jsftfpDc7HXwicR/rHAMv8gl+vXyUctOy/GwyCAIDzeO3gSLx9NO+fyT98oxVjy7iJ0e36gSottCJ+8WreOzcwKHnPbDAgjyX+MuDF452499alTearxiIe6vHnhAfpN7ua8eFU3rUbMCgCAC7gseSryZf6TYB+bSg0KI++7PY/LIYAgAs4cqIRL76d9y7AfRtbsWYJW/n2a0vhQTg+3Yjn3sz7W8EgCQBYhM2JHwOsGI145OuLu6W/drITP7g57+3/X7zajPm8w4eBEgCwCE9tH42p01WPYvl+9q3FzYp2/oNyCABYhOm5iCe3551c7r6xFV++5MKPATJ//OftoyPx2kGnNFgsfy2wSJkfAzQaEf94x/kn9+su7cS3Eu/8l/n3gSoIAFikP+xtxuHjeV8vu9DGPpmv/tudM9/+BxZPAMAidToRjyf+wtyGq9tx69XnvsLPvPPf799uxpETeeMMqiAAYAmyLzI712LAb1zbjnWX5739n/ljTVAVAQBLsO/9RrxyIO+fzU/uWIiRs1woZ779P3X6zFsawNLkPZNBRTLfBbj64k7cve6zdwGy7/z35PbRmJ6rehSQjwCAJfrlq82Yy3vB/IWNfr53UysuW5P3079W/8PyCABYohMzjfj1zryTzsNfb8XKT93EyLzz3+HjjfjD3ry/BVRJAMAyPJb4bYA1qzpx/21nJv3xsYgHb897O+PxP45GJ+/NC6iUAIBleH5XMz44lfe1s48X/T14+0JMrqx4MF3IvB4DqiYAYBkW2mc2nsnqRxtacclEJ/W7/68cGIl97+eNMKiaAIBl2pz4McBYM+I/3bMQf39L3gDI/O8Pw0AAwDK9cXgkdh3J+yf0X++bj9Gkw59biPjla3nvwMAwSPrnD8Nh87a8k1DmbX9/vbMZJ2bc/oduCADowuPbRqOV9wu6abn9D90TANCF90824oXdiS+lE/rgVCP+ZZd/c+iWAIAuPepqdKB+/mozFtx1ga4JAOjSM2804+Ss59GDsvllwQW9IACgS6cXIra+7pb0IOw6MhI73nHagl7wlwQ94DHAYDxq4x/oGQEAPfDy/pE4eMxjgH5qtSP++RWhBb0iAKBHfJe+v/7f7ma8f1JkQa8IAOiRzXam6yuPWaC3BAD0yKEPG/Hyv/mT6oeTs4341Rue/0MvOVtBDz3qFbW+2PJ6M04vVD0KqBcBAD209U/NmJ2vehT149O/0HsCAHro1GwjnnGruqcOHGvEy/udqqDX/FVBj3kboLce8+8JfSEAoMde2N2Mo3/xulovdDpu/0O/CADosVY74nEfrOmJl/aPxKEPxRT0gwCAPvDJ2t5w9Q/9IwCgD3a/OxLbD/vz6sbs/Jm3KoD+cIaCPnnM1WtXnnmjGadsswx9IwCgT37+ajMWWlWPIi+f/oX+EgDQJ8dONeL5XW5hL8d7f2nE7/b4t4N+EgDQR74JsDz//MpotNpVjwLqTQBAH/16RzOOT3uOvVSbvUUBfScAoI/mWxFbXjOZLcX2wyPx1rtOTdBv/sqgzyxmW5rNdlSEgRAA0GevHhyJve/7U1uMhVbEL9wxgYFwVoIBeMwz7UV5flczjp2yZgIGQQDAADy2bTTanapHMfw8LoHBEQAwAO8cb8Qf9roLcD7Hpxvx7E7/RjAoAgAGxKtt5/fL15ox78uJMDACAAbkyT+NxvRc1aMYXnb+g8ESADAg03NnIoAv2vv+SLx60OkIBslfHAyQxwBnt/ll/y4waAIABujFvc04fNxrbp/W7kQ8/oo7IzBoAgAGqNOJeNwGQZ/x4tvNeEcUwcAJABgwi90+67Ftbv9DFQQADNi+9xsWvP2VhZFQHWchqIAv3p3xhFcjoTICACrwy1d99CbCHglQJQEAFTgx04hf7yh78jt8vBEv+jwyVEYAQEU2F/42wOPbRqNjgySojACAijz/Ztlb37r9D9USAFCRhXbEz18tcxJ85cBI7H3f6Qeq5C8QKvRYoW8DlP74A4aBAIAKbT88Em+9W9af4dzCmbcggGqVdeaBIVTaBkHP7mzGiZly1z7AsBAAULHHXxmNVrvqUQyOTyHDcBAAULGjf2nEC7vLuAtw7FQjnt9Vxv9WGHaN8fHJ1G/ijo9PVD0EAAo1MzNd9RCWzR0AACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAACiQAACAAgkAAChQ+gCYmZmueggAFCj7/JM+AACApRMAAFAgAQAABRIAAFAgAQAABapFAGRfiQlALnWYd2oRAADA0ggAACiQAACAAtUmAOrwPAaA4VeX+aY2AQAALJ4AAIACCQAAKFCtAqAuz2UAGE51mmdqFQAAwOIIAAAoUO0CoE63ZwAYHnWbX2oXAADAhdUyAOpWaQBUq47zSi0DAAA4v9oGQB1rDYDBq+t8UtsAAADOrdYBUNdqA2Aw6jyP1DoAAICzq30A1LneAOifus8ftQ8AAOCLigiAulccAL1VwrxRRAAAAJ9VTACUUHMAdK+U+aKYAAAAPlFUAJRSdQAsT0nzRFEBEFHWjwvA4pU2PxQXABHl/cgAnF+J80KRAQAApSs2AEqsPQC+qNT5oNgAiCj3RwfgjJLngaIDIKLsHx+gZKWf/4sPAAAokQAIFQhQGud9AfA3DgaAMjjfnyEAPsVBAVBvzvOfEACf4+AAqCfn988SAGfhIAGoF+f1LxIA5+BgAagH5/OzEwDn4aAByM15/NwEwAU4eABycv4+v9GqB5DBxwfR+PhExSMB4EJM/IvjDsASOKgAhpvz9OIJgCVycAEMJ+fnpfEIYBk8EgAYHib+5XEHoAsOOoBqOQ8vnwDokoMPoBrOv93xCKAHPBIAGBwTf28IgB4SAgD9Y+LvLQHQB0IAoHdM/P0hAPpICAAsn4m/vwTAAAgBgMUz8Q+GABggIQBwbib+wRIAFRACAJ8w8VdDAFTo0we9GABKYtKvngAYEp//YxAEQJ2Y8IePABhSggDIzIQ//ARAEuf6YxIGQJVM9HkJgOT88QGwHDYDAoACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKJAAAIACCQAAKND/B7VAhSPLP2jSAAAAAElFTkSuQmCC">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com/3.4.17">
+    // PWA & Installation Support
+    let deferredPrompt = null;
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('btnInstallApp');
+      if (btn && !isStandalone) btn.classList.remove('hidden');
+      const aBox = document.getElementById('androidInstallBox');
+      if (aBox) aBox.classList.remove('hidden');
+    });
+
+    const btnInstall = document.getElementById('btnInstallApp');
+    if (isStandalone && btnInstall) {
+      btnInstall.classList.add('hidden');
+    }
+
+    if (btnInstall) {
+      btnInstall.addEventListener('click', () => {
+        const modal = document.getElementById('installModal');
+        const aBox = document.getElementById('androidInstallBox');
+        const iBox = document.getElementById('iosInstallBox');
+        const instNot = document.getElementById('installedNotice');
+
+        if (isStandalone) {
+          instNot.classList.remove('hidden');
+          if (aBox) aBox.classList.add('hidden');
+          if (iBox) iBox.classList.add('hidden');
+        } else if (deferredPrompt) {
+          if (aBox) aBox.classList.remove('hidden');
+          if (iBox) iBox.classList.add('hidden');
+        } else {
+          // iOS or fallback browser
+          if (iBox) iBox.classList.remove('hidden');
+        }
+        if (modal) modal.classList.remove('hidden');
+      });
+    }
+
+    const btnCloseInst = document.getElementById('btnCloseInstall');
+    if (btnCloseInst) {
+      btnCloseInst.addEventListener('click', () => {
+        document.getElementById('installModal').classList.add('hidden');
+      });
+    }
+
+    const btnTriggerAndroid = document.getElementById('btnTriggerAndroidInstall');
+    if (btnTriggerAndroid) {
+      btnTriggerAndroid.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            document.getElementById('installModal').classList.add('hidden');
+            if (btnInstall) btnInstall.classList.add('hidden');
+          }
+          deferredPrompt = null;
+        }
+      });
+    }
+
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -77,6 +154,9 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <button id="btnInstallApp" class="px-2.5 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-medium text-amber-300 transition flex items-center gap-1.5" title="Install or Add to Home Screen">
+          <span>📲</span> <span class="hidden sm:inline">Install</span>
+        </button>
         <button id="btnAwayToggle" class="px-2.5 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300 transition flex items-center gap-1.5" title="Toggle Away Mode (Pause Routines)">
           <span id="awayDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span id="awayText">Home</span>
@@ -1345,6 +1425,122 @@
       loadCloudConfig();
       loadWeather(false);
     });
+  
+    // PWA & Installation Support
+    let deferredPrompt = null;
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('btnInstallApp');
+      if (btn && !isStandalone) btn.classList.remove('hidden');
+      const aBox = document.getElementById('androidInstallBox');
+      if (aBox) aBox.classList.remove('hidden');
+    });
+
+    const btnInstall = document.getElementById('btnInstallApp');
+    if (isStandalone && btnInstall) {
+      btnInstall.classList.add('hidden');
+    }
+
+    if (btnInstall) {
+      btnInstall.addEventListener('click', () => {
+        const modal = document.getElementById('installModal');
+        const aBox = document.getElementById('androidInstallBox');
+        const iBox = document.getElementById('iosInstallBox');
+        const instNot = document.getElementById('installedNotice');
+
+        if (isStandalone) {
+          instNot.classList.remove('hidden');
+          if (aBox) aBox.classList.add('hidden');
+          if (iBox) iBox.classList.add('hidden');
+        } else if (deferredPrompt) {
+          if (aBox) aBox.classList.remove('hidden');
+          if (iBox) iBox.classList.add('hidden');
+        } else {
+          // iOS or fallback browser
+          if (iBox) iBox.classList.remove('hidden');
+        }
+        if (modal) modal.classList.remove('hidden');
+      });
+    }
+
+    const btnCloseInst = document.getElementById('btnCloseInstall');
+    if (btnCloseInst) {
+      btnCloseInst.addEventListener('click', () => {
+        document.getElementById('installModal').classList.add('hidden');
+      });
+    }
+
+    const btnTriggerAndroid = document.getElementById('btnTriggerAndroidInstall');
+    if (btnTriggerAndroid) {
+      btnTriggerAndroid.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            document.getElementById('installModal').classList.add('hidden');
+            if (btnInstall) btnInstall.classList.add('hidden');
+          }
+          deferredPrompt = null;
+        }
+      });
+    }
+
   </script>
+  <!-- Install / Add to Home Screen Modal -->
+  <div id="installModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-white/10 rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-b from-amber-400 to-amber-600 flex items-center justify-center font-bold text-black text-sm shadow">V</div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">Install Vestaboard App</h3>
+            <p class="text-[11px] text-zinc-400">Run full-screen without browser bars</p>
+          </div>
+        </div>
+        <button id="btnCloseInstall" class="text-zinc-400 hover:text-white p-1 text-sm">✕</button>
+      </div>
+
+      <!-- Android / Desktop Direct Prompt -->
+      <div id="androidInstallBox" class="hidden space-y-3">
+        <p class="text-xs text-zinc-300 leading-relaxed">
+          Install Vestaboard Studio directly to your device for 1-tap full-screen access from your app drawer.
+        </p>
+        <button id="btnTriggerAndroidInstall" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+          <span>📲</span> Install Native Web App
+        </button>
+      </div>
+
+      <!-- iOS Safari Instructions -->
+      <div id="iosInstallBox" class="space-y-3 text-xs text-zinc-300">
+        <p class="text-zinc-400 text-[11px]">To run as a full-screen app on iPhone / iPad:</p>
+        <div class="space-y-2.5 bg-black/50 p-3 rounded-xl border border-white/5">
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-white/10 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
+            <div>Tap the <span class="font-semibold text-white">Share button</span> <span class="px-1.5 py-0.5 rounded bg-white/10 text-[11px]">⎋ / Share</span> in Safari's bottom toolbar.</div>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-white/10 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
+            <div>Scroll down and select <span class="font-semibold text-white">Add to Home Screen</span> ➕.</div>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-white/10 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
+            <div>Tap <span class="font-semibold text-white">Add</span> in the top right corner.</div>
+          </div>
+        </div>
+        <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 text-[11px] flex items-center gap-2">
+          <span>✨</span>
+          <span>Opens as a clean, full-screen mobile app with no URL bars or tabs!</span>
+        </div>
+      </div>
+
+      <div id="installedNotice" class="hidden text-center py-2 text-xs text-emerald-400 font-medium">
+        ✓ Vestaboard Studio is already running in standalone app mode!
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
