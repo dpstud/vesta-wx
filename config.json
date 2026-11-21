@@ -72,6 +72,14 @@
       "start_time": "10:00",
       "end_time": "23:59",
       "enabled": false
+    },
+    {
+      "id": "1795289756201",
+      "module": "weather",
+      "start_time": "23:59",
+      "end_time": "00:59",
+      "enabled": true,
+      "name": "Weather & Rain"
     }
   ]
 }
