@@ -75,11 +75,11 @@
     },
     {
       "id": "1795289756201",
-      "module": "weather",
+      "module": "mct",
       "start_time": "23:59",
       "end_time": "00:59",
       "enabled": true,
-      "name": "Weather & Rain"
+      "name": "Manhattan Cruise Port"
     }
   ]
 }
