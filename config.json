@@ -83,11 +83,11 @@
     },
     {
       "id": "1795289771012",
-      "module": "weather",
+      "module": "breck",
       "start_time": "00:59",
       "end_time": "01:59",
       "enabled": true,
-      "name": "Weather & Rain"
+      "name": "Breck Snow & Lifts"
     }
   ]
 }
