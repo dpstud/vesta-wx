@@ -59,7 +59,7 @@
       "module": "sports",
       "start_time": "10:00",
       "end_time": "22:00",
-      "enabled": true,
+      "enabled": false,
       "teams": [
         "BUF"
       ]
