@@ -667,49 +667,106 @@ ightarrow$ <span class="font-semibold text-white">Install Vestaboard Studio</spa
       return text.trim();
     }
 
+    function mapTextCondition(desc) {
+      const d = (desc || "").toLowerCase();
+      if (d.includes("thunder") || d.includes("t-storm")) return ["THUNDERSTORMS", true];
+      if (d.includes("blizzard") || d.includes("heavy snow") || d.includes("snowstorm")) return ["SNOWSTORM", true];
+      if (d.includes("snow") || d.includes("flurr") || d.includes("sleet") || d.includes("ice")) return ["SLIGHT SNOW", true];
+      if (d.includes("shower")) return ["SHOWERS", true];
+      if (d.includes("heavy rain")) return ["SEVERE RAIN", true];
+      if (d.includes("rain")) return ["SLIGHT RAIN", true];
+      if (d.includes("drizzle")) return ["DRIZZLE", true];
+      if (d.includes("fog") || d.includes("mist") || d.includes("haze")) return ["FOGGY", false];
+      if (d.includes("overcast") || d.includes("mostly cloudy")) return ["FULL OVERCAST", false];
+      if (d.includes("partly") || d.includes("cloudy") || d.includes("mostly sunny") || d.includes("mostly clear")) return ["PARTLY CLOUDY", false];
+      if (d.includes("sunny")) return ["SUNNY SKIES", false];
+      if (d.includes("clear") || d.includes("fair")) return ["CLEAR SKY", false];
+      return ["VARIABLE", false];
+    }
+
     async function loadWeather(sendAfter = false) {
       setStatus("Fetching live weather forecast...");
       const lat = parseFloat(localStorage.getItem("VESTA_LAT") || "40.7128");
       const lon = parseFloat(localStorage.getItem("VESTA_LON") || "-74.0060");
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
 
-      try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const current = data.current || {};
-          const daily = data.daily || {};
-          const temp = Math.round(current.temperature_2m ?? 50);
-          const code = current.weather_code ?? 0;
-          const condition = WEATHER_CODES[code] || "VARIABLE";
-          const high = Math.round(daily.temperature_2m_max?.[0] ?? temp);
-          const low = Math.round(daily.temperature_2m_min?.[0] ?? temp);
-          const rain = Math.round(daily.precipitation_probability_max?.[0] ?? 0);
-          const isPrecip = PRECIP_CODES.includes(code);
+      const applyWeather = (condition, temp, high, low, rain, isPrecip, sourceLabel) => {
+        const rainVal = Math.max(0, Math.min(100, Math.round(rain)));
+        const rainText = rainVal >= 100 ? "RAIN:100%" : `RAIN: ${String(rainVal).padStart(2)}%`;
+        const bottomRow = isPrecip ? `{67}{67} ${rainText} {67}{67}` : rainText;
+        currentLines = [
+          padFlaps(condition, 15),
+          padFlaps(`${temp}  H:${high} L:${low}`, 15),
+          bottomRow
+        ];
+        renderGrid(currentLines);
+        document.getElementById("displayMode").textContent = "WEATHER FEED";
+        setStatus(`Loaded live weather (${sourceLabel}): ${condition}, ${temp}°F (H:${high}° L:${low}°).`);
+        if (sendAfter) sendToBoard(currentLines);
+      };
 
-          const rainText = rain >= 100 ? "RAIN:100%" : `RAIN: ${String(rain).padStart(2)}%`;
-          const bottomRow = isPrecip ? `{67}{67} ${rainText} {67}{67}` : rainText;
-
-          currentLines = [
-            padFlaps(condition, 15),
-            padFlaps(`${temp}  H:${high} L:${low}`, 15),
-            bottomRow
-          ];
-          renderGrid(currentLines);
-          document.getElementById("displayMode").textContent = "WEATHER FEED";
-          setStatus(`Loaded live weather: ${condition}, ${temp}°F (H:${high}° L:${low}°).`);
-
-          if (sendAfter) {
-            sendToBoard(currentLines);
+      // 1. Primary: Open-Meteo (with 1 retry)
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (!data.error && data.current && data.daily) {
+              const current = data.current;
+              const daily = data.daily;
+              const temp = Math.round(current.temperature_2m ?? 50);
+              const code = current.weather_code ?? 0;
+              const condition = WEATHER_CODES[code] || "VARIABLE";
+              const high = Math.round(daily.temperature_2m_max?.[0] ?? temp);
+              const low = Math.round(daily.temperature_2m_min?.[0] ?? temp);
+              const rain = Math.round(daily.precipitation_probability_max?.[0] ?? 0);
+              applyWeather(condition, temp, high, low, rain, PRECIP_CODES.includes(code), "Open-Meteo");
+              return;
+            }
           }
-          return;
+        } catch (err) {
+          console.warn(`Open-Meteo attempt ${attempt + 1} failed:`, err);
+        }
+        if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+      }
+
+      // 2. Fallback: NOAA / National Weather Service
+      try {
+        const ptsRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`);
+        if (ptsRes.ok) {
+          const pts = await ptsRes.json();
+          const hourlyUrl = pts.properties?.forecastHourly;
+          const dailyUrl = pts.properties?.forecast;
+          if (hourlyUrl && dailyUrl) {
+            const [hRes, dRes] = await Promise.all([fetch(hourlyUrl), fetch(dailyUrl)]);
+            if (hRes.ok && dRes.ok) {
+              const hPeriods = (await hRes.json()).properties?.periods || [];
+              const dPeriods = (await dRes.json()).properties?.periods || [];
+              if (hPeriods.length && dPeriods.length) {
+                const cur = hPeriods[0];
+                const temp = Math.round(cur.temperature);
+                const [condition, isPrecip] = mapTextCondition(cur.shortForecast);
+                const temps = dPeriods.slice(0, 2).map(p => p.temperature).filter(t => typeof t === "number");
+                const high = temps.length ? Math.round(Math.max(...temps)) : temp;
+                const low = temps.length ? Math.round(Math.min(...temps)) : temp;
+                let rain = cur.probabilityOfPrecipitation?.value || 0;
+                for (const p of dPeriods.slice(0, 2)) {
+                  const pr = p.probabilityOfPrecipitation?.value || 0;
+                  if (pr > rain) rain = pr;
+                }
+                applyWeather(condition, temp, high, low, rain, isPrecip, "NWS");
+                return;
+              }
+            }
+          }
         }
       } catch (err) {
-        console.warn("Weather fetch error:", err);
+        console.warn("NWS weather fallback failed:", err);
       }
 
       currentLines = ["WEATHER REPORT", " DATA PENDING  ", "  TRYING AGAIN "];
       renderGrid(currentLines);
+      setStatus("⚠️ Weather APIs temporarily unreachable.");
       if (sendAfter) sendToBoard(currentLines);
     }
     async function loadSubwayStatus(sendAfter = false) {
@@ -1028,10 +1085,10 @@ ightarrow$ <span class="font-semibold text-white">Install Vestaboard Studio</spa
     document.getElementById("btnSendBreck").addEventListener("click", () => { loadBreck(true); });
 
     function loadMCT(sendAfter = false) {
-      currentLines = ["PORT OF NY: MCT", "MSC MERAVIGLIA ", "DEPARTS SUN 7PM"];
+      currentLines = ["PORT OF NY: MCT", "NO SHIPS DOCKED", "  PIERS 88-92  "];
       renderGrid(currentLines);
       document.getElementById("displayMode").textContent = "MANHATTAN CRUISE";
-      setStatus("Loaded Manhattan Cruise Port preview (Piers 88-92).");
+      setStatus("Previewing Manhattan Cruise Port (live port schedule runs via GitHub Actions).");
       if (sendAfter) sendToBoard(currentLines);
     }
 
