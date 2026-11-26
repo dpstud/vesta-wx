@@ -6,10 +6,12 @@ Manages scheduled routines, overlapping rotations, multi-team sports, Breckenrid
 
 import argparse
 import datetime
+import html as html_lib
 import json
 import os
 import re
 import sys
+import time
 import requests
 
 try:
@@ -61,7 +63,46 @@ WEATHER_CODES = {
 
 PRECIP_CODES = {51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99}
 
-def get_weather(lat: float, lon: float) -> list[str]:
+def _format_weather_rows(condition: str, temp: int, high: int, low: int, rain: int, is_precip: bool) -> list[str]:
+    rain_val = max(0, min(100, int(round(rain))))
+    rain_text = "RAIN:100%" if rain_val >= 100 else f"RAIN: {rain_val:>2}%"
+    bottom_row = f"{{67}}{{67}} {rain_text} {{67}}{{67}}" if is_precip else rain_text
+    return [
+        condition[:15].strip(),
+        f"{temp}  H:{high} L:{low}",
+        bottom_row,
+    ]
+
+def _map_text_condition(desc: str) -> tuple[str, bool]:
+    d = desc.lower()
+    if "thunder" in d or "t-storm" in d:
+        return "THUNDERSTORMS", True
+    if "blizzard" in d or "heavy snow" in d or "snowstorm" in d:
+        return "SNOWSTORM", True
+    if "snow" in d or "flurr" in d or "sleet" in d or "ice" in d:
+        return "SLIGHT SNOW", True
+    if "shower" in d:
+        return "SHOWERS", True
+    if "heavy rain" in d:
+        return "SEVERE RAIN", True
+    if "rain" in d:
+        return "SLIGHT RAIN", True
+    if "drizzle" in d:
+        return "DRIZZLE", True
+    if "fog" in d or "mist" in d or "haze" in d:
+        return "FOGGY", False
+    if "overcast" in d or "mostly cloudy" in d:
+        return "FULL OVERCAST", False
+    if "partly" in d or "cloudy" in d or "mostly sunny" in d or "mostly clear" in d:
+        return "PARTLY CLOUDY", False
+    if "sunny" in d:
+        return "SUNNY SKIES", False
+    if "clear" in d or "fair" in d:
+        return "CLEAR SKY", False
+    return "VARIABLE", False
+
+def get_weather(lat: float, lon: float) -> list[str] | None:
+    headers = {"User-Agent": "VestaboardStudio/1.0 (https://github.com/dpstud/vesta-wx)"}
     url = (
         f"https://api.open-meteo.com/v1/forecast?"
         f"latitude={lat}&longitude={lon}&"
@@ -69,32 +110,85 @@ def get_weather(lat: float, lon: float) -> list[str]:
         f"daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&"
         f"temperature_unit=fahrenheit&timezone=auto"
     )
+
+    # 1. Primary: Open-Meteo with retries & backoff
+    for attempt in range(3):
+        try:
+            resp = requests.get(url, headers=headers, timeout=12)
+            resp.raise_for_status()
+            res = resp.json()
+            if res.get("error"):
+                raise ValueError(res.get("reason", "Open-Meteo API error"))
+            current = res["current"]
+            daily = res["daily"]
+            temp = round(current["temperature_2m"])
+            code = current["weather_code"]
+            condition = WEATHER_CODES.get(code, "VARIABLE")
+            high = round(daily["temperature_2m_max"][0])
+            low = round(daily["temperature_2m_min"][0])
+            rain = daily["precipitation_probability_max"][0] or 0
+            is_precip = code in PRECIP_CODES
+            return _format_weather_rows(condition, temp, high, low, rain, is_precip)
+        except Exception as e:
+            print(f"Open-Meteo attempt {attempt + 1}/3 failed: {e}")
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1))
+
+    # 2. Fallback 1: NOAA / National Weather Service (api.weather.gov)
     try:
-        res = requests.get(url, timeout=10).json()
-        current = res["current"]
-        daily = res["daily"]
-        temp = round(current["temperature_2m"])
-        code = current["weather_code"]
-        condition = WEATHER_CODES.get(code, "VARIABLE")
-        high = round(daily["temperature_2m_max"][0])
-        low = round(daily["temperature_2m_min"][0])
-        rain = daily["precipitation_probability_max"][0]
-        is_precip = code in PRECIP_CODES
+        pts_resp = requests.get(f"https://api.weather.gov/points/{lat:.4f},{lon:.4f}", headers=headers, timeout=10)
+        pts_resp.raise_for_status()
+        props = pts_resp.json().get("properties", {})
+        hourly_url = props.get("forecastHourly")
+        daily_url = props.get("forecast")
+        if hourly_url and daily_url:
+            h_resp = requests.get(hourly_url, headers=headers, timeout=10)
+            h_resp.raise_for_status()
+            h_periods = h_resp.json().get("properties", {}).get("periods", [])
 
-        rain_text = "RAIN:100%" if rain >= 100 else f"RAIN: {rain:>2}%"
-        bottom_row = f"{{67}}{{67}} {rain_text} {{67}}{{67}}" if is_precip else rain_text
+            d_resp = requests.get(daily_url, headers=headers, timeout=10)
+            d_resp.raise_for_status()
+            d_periods = d_resp.json().get("properties", {}).get("periods", [])
 
-        return [
-            condition,
-            f"{temp}  H:{high} L:{low}",
-            bottom_row,
-        ]
+            if h_periods and d_periods:
+                cur = h_periods[0]
+                temp = round(cur["temperature"])
+                condition, is_precip = _map_text_condition(cur.get("shortForecast", ""))
+                rain = (cur.get("probabilityOfPrecipitation") or {}).get("value") or 0
+
+                temps = [p["temperature"] for p in d_periods[:2] if isinstance(p.get("temperature"), (int, float))]
+                high = round(max(temps)) if temps else temp
+                low = round(min(temps)) if temps else temp
+
+                for p in d_periods[:2]:
+                    p_rain = (p.get("probabilityOfPrecipitation") or {}).get("value") or 0
+                    if p_rain > rain:
+                        rain = p_rain
+
+                print("Weather loaded via NOAA/NWS fallback.")
+                return _format_weather_rows(condition, temp, high, low, rain, is_precip)
     except Exception as e:
-        return [
-            pad_flaps_center("WEATHER REPORT", 15),
-            pad_flaps_center("DATA PENDING", 15),
-            pad_flaps_center("TRYING AGAIN", 15),
-        ]
+        print(f"NWS weather fallback failed: {e}")
+
+    # 3. Fallback 2: wttr.in
+    try:
+        w_resp = requests.get(f"https://wttr.in/{lat},{lon}?format=j1", headers=headers, timeout=10)
+        w_resp.raise_for_status()
+        w_data = w_resp.json()
+        cur = w_data["current_condition"][0]
+        today = w_data["weather"][0]
+        temp = round(float(cur["temp_F"]))
+        high = round(float(today["maxtempF"]))
+        low = round(float(today["mintempF"]))
+        desc = cur["weatherDesc"][0]["value"]
+        condition, is_precip = _map_text_condition(desc)
+        rain = max((int(h.get("chanceofrain", 0)) for h in today.get("hourly", [])), default=0)
+        print("Weather loaded via wttr.in fallback.")
+        return _format_weather_rows(condition, temp, high, low, rain, is_precip)
+    except Exception as e:
+        print(f"wttr.in weather fallback failed: {e}")
+
+    return None
 
 def get_subway_status() -> list[str]:
     c_status, e_status = "Good Service", "Good Service"
@@ -360,22 +454,22 @@ def get_sports(team_code: str = "BUF", tz_name: str = "America/New_York") -> lis
 
 def get_breck() -> list[str]:
     """
-    Fetches Breckenridge ski status (Open-Meteo snowfall + Vail Resorts Terrain / Liftie API).
+    Fetches Breckenridge ski status (Open-Meteo snowfall + Vail Resorts / OnTheSnow / Liftie).
     Layout:
       BRECK  +8" SNOW
       LIFTS: 24/35 OP
       TRAILS: 142/187
-    When closed / pre-season:
-      BRECK   0" SNOW
-      LIFTS:  0/35 OP
-      TRAILS:   0/187
     """
     new_snow = 0
+    browser_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
     # 1. Live 24h Snowfall from Open-Meteo
     try:
         snow_url = "https://api.open-meteo.com/v1/forecast?latitude=39.48&longitude=-106.07&daily=snowfall_sum&timezone=America%2FDenver&precipitation_unit=inch"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        snow_res = requests.get(snow_url, headers=headers, timeout=8).json()
+        snow_res = requests.get(snow_url, headers=browser_headers, timeout=8).json()
         daily_sums = snow_res.get("daily", {}).get("snowfall_sum", [])
         if daily_sums and daily_sums[0] is not None:
             new_snow = max(0, round(float(daily_sums[0])))
@@ -383,33 +477,63 @@ def get_breck() -> list[str]:
         print(f"Breck snow API error: {e}")
 
     open_lifts, total_lifts = 0, 35
-    open_trails, total_trails = 0, 187
+    open_trails, total_trails = 0, 188
+    got_lifts = False
+    got_trails = False
 
-    # 2. Primary Vail Resorts Terrain API
+    # 2. Primary: Vail Resorts Terrain API
     try:
         terrain_url = "https://cache.snow.com/api/TerrainApi/GetTerrainStatus"
-        headers = {
+        vail_headers = {
+            **browser_headers,
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Referer": "https://www.breckenridge.com/",
-            "Origin": "https://www.breckenridge.com"
+            "Origin": "https://www.breckenridge.com",
         }
-        res = requests.post(terrain_url, data="SiteId=2", headers=headers, timeout=8).json()
+        res = requests.post(terrain_url, data="SiteId=2", headers=vail_headers, timeout=8).json()
 
         lifts = res.get("Lifts", [])
         if lifts:
             total_lifts = len(lifts)
             open_lifts = sum(1 for l in lifts if str(l.get("Status", "")).lower() == "open")
+            got_lifts = True
 
         trails = res.get("Trails", [])
         if trails:
             total_trails = len(trails)
             open_trails = sum(1 for t in trails if str(t.get("Status", "")).lower() == "open")
+            got_trails = True
     except Exception as e:
-        print(f"Vail Resorts API error, trying Liftie backup: {e}")
+        print(f"Vail Resorts API error: {e}")
+
+    # 3. Secondary: OnTheSnow (provides both Lifts Open and Runs Open)
+    if not got_trails or not got_lifts:
         try:
-            headers = {"User-Agent": "Mozilla/5.0 (Vestaboard/1.0)"}
-            liftie_res = requests.get("https://liftie.info/api/resort/breck", headers=headers, timeout=8).json()
+            ots_url = "https://www.onthesnow.com/colorado/breckenridge/skireport"
+            ots_res = requests.get(ots_url, headers=browser_headers, timeout=10)
+            if ots_res.status_code == 200:
+                plain = re.sub(r"<[^>]+>", " ", ots_res.text)
+                plain = re.sub(r"\s+", " ", html_lib.unescape(plain))
+
+                m_lifts = re.search(r"Lifts\s+Open\s+(\d+)\s*/\s*(\d+)", plain, re.IGNORECASE)
+                if m_lifts and not got_lifts:
+                    open_lifts = int(m_lifts.group(1))
+                    total_lifts = int(m_lifts.group(2))
+                    got_lifts = True
+
+                m_runs = re.search(r"Runs\s+Open\s+(\d+)\s*/\s*(\d+)", plain, re.IGNORECASE)
+                if m_runs and not got_trails:
+                    open_trails = int(m_runs.group(1))
+                    total_trails = int(m_runs.group(2))
+                    got_trails = True
+                print(f"OnTheSnow Breck parsed: lifts={open_lifts}/{total_lifts}, runs={open_trails}/{total_trails}")
+        except Exception as e_ots:
+            print(f"OnTheSnow fallback error: {e_ots}")
+
+    # 4. Tertiary: Liftie backup (lifts only)
+    if not got_lifts:
+        try:
+            liftie_res = requests.get("https://liftie.info/api/resort/breck", headers={"User-Agent": "VestaboardStudio/1.0"}, timeout=8).json()
             stats = liftie_res.get("stats", {})
             open_lifts = stats.get("open", 0)
             closed_lifts = stats.get("closed", 0)
@@ -420,7 +544,7 @@ def get_breck() -> list[str]:
         except Exception as e2:
             print(f"Liftie backup error: {e2}")
 
-    # 3. Format lines strictly 15 chars each
+    # 5. Format lines strictly 15 chars each
     snow_str = f'+{new_snow}" SNOW' if new_snow > 0 else f'{new_snow}" SNOW'
     row1 = f"BRECK {snow_str:>9}".ljust(15)[:15]
     row2 = f"LIFTS: {open_lifts:>2}/{total_lifts:<2} OP".ljust(15)[:15]
@@ -428,72 +552,102 @@ def get_breck() -> list[str]:
 
     return [row1, row2, row3]
 
+def _format_dep_time(dep_raw: str) -> str:
+    """Formats CruiseMapper departure string (e.g. '16:00' or '02 Nov, 16:00') for 15-char row 3."""
+    m = re.search(r"(\d{1,2}):(\d{2})", dep_raw or "")
+    if not m:
+        return "BERTHED AT PIER"
+    hr, mn = int(m.group(1)), int(m.group(2))
+    ap = "AM" if hr < 12 else "PM"
+    hr12 = hr % 12 or 12
+    return f"DEPARTS {hr12}:{mn:02d}{ap}"[:15]
+
 def get_mct() -> list[str]:
     """
     Manhattan Cruise Terminal (MCT - Piers 88-92) Feed.
-    Tracks cruise ships berthed on the Hudson River in Midtown West.
-    Layout:
-      PORT OF NY: MCT
-      MSC MERAVIGLIA 
-      DEPARTS SUN 7PM
-    When empty:
-      PORT OF NY: MCT
-      NO SHIPS DOCKED
-        PIERS 88-92  
+    Checks CruiseMapper Port 98 schedule table strictly for TODAY's date in America/New_York
+    and filters out Brooklyn-only ships (MSC Meraviglia, Queen Mary 2, Valiant Lady, etc.).
     """
     row1 = "PORT OF NY: MCT"
     docked_ship = None
     departure_str = None
 
+    now_ny = datetime.datetime.now(ZoneInfo("America/New_York")) if ZoneInfo else datetime.datetime.now()
+    today_ny = now_ny.date()
+
+    # Ships that berth at Brooklyn Cruise Terminal (Red Hook) rather than Manhattan (Piers 88-92)
+    brooklyn_ships = {
+        "msc meraviglia",
+        "queen mary 2",
+        "valiant lady",
+        "sapphire princess",
+        "majestic princess",
+    }
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
 
-    # 1. Primary: Scrape CruiseMapper Port 98 (NYC Manhattan-Brooklyn)
+    # Parse CruiseMapper Port 98 schedule table rows strictly by date
     try:
         cm_url = "https://www.cruisemapper.com/ports/new-york-port-98"
-        res = requests.get(cm_url, headers=headers, timeout=8)
+        res = requests.get(cm_url, headers=headers, timeout=10)
         if res.status_code == 200:
-            html = res.text
-            priority_ships = [
-                ("MSC MERAVIGLIA", "DEPARTS SUN 7PM"),
-                ("MAJESTIC PRINCESS", "DEPARTS: 4:00PM"),
-                ("NORWEGIAN BLISS", "DEPARTS MON 4PM"),
-                ("NORWEGIAN AQUA", "BERTHED AT PIER"),
-                ("CARNIVAL VENEZIA", "BERTHED AT PIER"),
-                ("NORWEGIAN ESCAPE", "BERTHED AT PIER"),
-                ("VIKING MARS", "BERTHED AT PIER"),
-            ]
-            for ship_name, default_dep in priority_ships:
-                if ship_name.lower() in html.lower():
-                    docked_ship = ship_name
-                    departure_str = default_dep
-                    break
+            rows = re.findall(r"<tr[^>]*>(.*?)</tr>", res.text, re.DOTALL | re.IGNORECASE)
+            for tr in rows:
+                cells = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.DOTALL | re.IGNORECASE)
+                if len(cells) < 2:
+                    continue
+                clean_cells = [
+                    re.sub(r"\s+", " ", html_lib.unescape(re.sub(r"<[^>]+>", " ", c))).strip()
+                    for c in cells
+                ]
+                date_cell = clean_cells[0]
+                m_date = re.search(r"(\d{1,2})\s+([A-Za-z]+),\s+(\d{4})", date_cell)
+                if not m_date:
+                    continue
+                try:
+                    call_date = datetime.datetime.strptime(
+                        f"{m_date.group(1)} {m_date.group(2)} {m_date.group(3)}", "%d %B %Y"
+                    ).date()
+                except ValueError:
+                    continue
+
+                if call_date != today_ny:
+                    continue
+
+                # Extract ship name from the 2nd cell (strip cruise line prefix if present)
+                ship_cell = clean_cells[1]
+                ship_clean = re.sub(r"^.*?cruise\s+line\s+", "", ship_cell, flags=re.IGNORECASE).strip()
+                if not ship_clean:
+                    ship_clean = ship_cell
+
+                if any(bk in ship_clean.lower() for bk in brooklyn_ships):
+                    continue
+
+                dep_cell = clean_cells[3] if len(clean_cells) > 3 else ""
+                # If departure is today and already passed by >1 hour, skip
+                m_dep = re.match(r"^(\d{1,2}):(\d{2})$", dep_cell.strip())
+                if m_dep:
+                    dep_hour = int(m_dep.group(1))
+                    if now_ny.hour > dep_hour + 1:
+                        continue
+
+                docked_ship = ship_clean.upper()
+                departure_str = _format_dep_time(dep_cell)
+                break
     except Exception as e:
         print(f"CruiseMapper scrape error: {e}")
 
-    # 2. Secondary fallback: CruiseTimeTables
     if not docked_ship:
-        try:
-            ct_url = "https://www.cruisetimetables.com/new-york-city-new-york-cruise-ship-schedule.html"
-            res2 = requests.get(ct_url, headers=headers, timeout=6)
-            if res2.status_code == 200:
-                html2 = res2.text
-                if "meraviglia" in html2.lower():
-                    docked_ship = "MSC MERAVIGLIA"
-                    departure_str = "DEPARTS SUN 7PM"
-        except Exception as e2:
-            print(f"CruiseTimeTables fallback error: {e2}")
+        return [row1, "NO SHIPS DOCKED", "  PIERS 88-92  "]
 
-    if not docked_ship:
-        row2 = "NO SHIPS DOCKED"
-        row3 = "  PIERS 88-92  "
-        return [row1, row2, row3]
-
-    row2 = docked_ship[:15].ljust(15)
-    row3 = (departure_str if departure_str else "BERTHED AT PIER")[:15].ljust(15)
-    return [row1, row2, row3]
+    return [
+        row1,
+        docked_ship[:15].ljust(15),
+        (departure_str or "BERTHED AT PIER")[:15].ljust(15),
+    ]
 
 def get_air_quality(lat: float, lon: float) -> list[str]:
     """
@@ -669,6 +823,16 @@ def main():
 
     if module_to_run == "weather":
         lines = get_weather(coords["latitude"], coords["longitude"])
+        if lines is None:
+            if args.test:
+                lines = [
+                    pad_flaps_center("WEATHER REPORT", 15),
+                    pad_flaps_center("DATA PENDING", 15),
+                    pad_flaps_center("TRYING AGAIN", 15),
+                ]
+            else:
+                print("All weather providers failed. Skipping Vestaboard update to preserve current display.")
+                sys.exit(0)
     elif module_to_run == "subway_status":
         lines = get_subway_status()
     elif module_to_run == "subway_countdown":
@@ -685,6 +849,9 @@ def main():
         lines = get_air_quality(coords["latitude"], coords["longitude"])
     else:
         lines = get_weather(coords["latitude"], coords["longitude"])
+        if lines is None:
+            print("All weather providers failed. Skipping Vestaboard update to preserve current display.")
+            sys.exit(0)
 
     send_to_vestaboard(lines, dry_run=args.test)
 
